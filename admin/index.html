@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialSpark Content Manager</title>
+  <!-- Include the styles for the Decap CMS UI -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap">
+  <style>
+    :root {
+      --hot-pink: #FF3399;
+      --soft-pink: #FF99CC;
+      --light-pink: #FFCCE5;
+      --black: #000000;
+      --white: #FFFFFF;
+    }
+    
+    /* Custom styles for the admin panel to match the website's branding */
+    .nc-appHeader-container {
+      background-color: var(--black) !important;
+    }
+    
+    .nc-appHeader-logo {
+      color: var(--hot-pink) !important;
+    }
+    
+    .nc-button-primary {
+      background-color: var(--hot-pink) !important;
+    }
+    
+    .nc-button-primary:hover {
+      background-color: var(--soft-pink) !important;
+    }
+    
+    /* Custom font for the admin panel */
+    body {
+      font-family: 'Outfit', sans-serif;
+    }
+    
+    h1, h2, h3, h4, h5, h6, .nc-appHeader-logo {
+      font-family: 'Unbounded', cursive;
+    }
+  </style>
+</head>
+<body>
+  <!-- Include the script that builds the page and powers Decap CMS -->
+  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+  
+  <script>
+    // Custom preview styles to match the website
+    CMS.registerPreviewStyle('https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+    
+    // Custom preview template
+    const PreviewTemplate = createClass({
+      render: function() {
+        const entry = this.props.entry;
+        const data = entry.getIn(['data']).toJS();
+        
+        return h('div', {className: 'content-preview'},
+          h('h1', {}, 'SocialSpark Content Preview'),
+          h('div', {className: 'preview-section'},
+            h('h2', {}, 'Header'),
+            h('p', {}, `Logo: ${data.logo || ''}`)
+          ),
+          h('div', {className: 'preview-section'},
+            h('h2', {}, 'Hero Section'),
+            h('p', {}, `Title: ${data.hero?.title?.line1 || ''} ${data.hero?.title?.line2 || ''} ${data.hero?.title?.line3 || ''}`),
+            h('p', {}, `Description: ${data.hero?.description || ''}`)
+          ),
+          h('div', {className: 'preview-section'},
+            h('h2', {}, 'Services Section'),
+            h('p', {}, `Title: ${data.services?.title || ''}`),
+            h('p', {}, `Subtitle: ${data.services?.subtitle || ''}`)
+          ),
+          h('p', {}, 'Note: This is a simplified preview. The actual website will have full styling and layout.')
+        );
+      }
+    });
+    
+    CMS.registerPreviewTemplate('content', PreviewTemplate);
+  </script>
+
+  <script>
+  // Initialize Decap CMS with GitHub authentication
+  window.CMS.init();
+  
+  // Optional: Add a custom login message
+  if (window.netlifyIdentity) {
+    window.netlifyIdentity.on("init", user => {
+      if (!user) {
+        document.getElementById('nc-root').innerHTML = '<div style="padding: 20px; text-align: center;"><h2>SocialSpark CMS</h2><p>Please log in with your GitHub account to access the content management system.</p></div>';
+      }
+    });
+  }
+</script>
+</body>
+</html>
