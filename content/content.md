@@ -11,7 +11,7 @@ navigation:
     url: '#contact'
 hero:
   title:
-    line1: LEVEL UP
+    line1: LEVEL
     line2: YOUR SOCIAL
     line3: MEDIA GAME
   description: Transform your brand with vibrant, eye-catching content that connects, engages, and converts your audience into loyal fans.
@@ -25,13 +25,13 @@ services:
   title: OUR SERVICES
   subtitle: Vibrant social media solutions to make your brand stand out from the crowd
   items:
-    - icon: Ã°Â±
+    - icon: ÃÂ°ÃÂ±
       title: Content Creation
       description: Eye-catching visuals and engaging copy that resonates with your audience and reflects your brand's unique personality.
-    - icon: Ã°
+    - icon: ÃÂ°
       title: Strategy Development
       description: Data-driven approaches to maximize your social media ROI with customized plans that align with your goals.
-    - icon: Ã°Â°
+    - icon: ÃÂ°ÃÂ°
       title: Paid Campaigns
       description: Targeted advertising that reaches your ideal customers with creative that converts scrollers into buyers.
 thisAndThat:
@@ -86,7 +86,7 @@ portfolio:
       title: Travel Campaign
 testimonial:
   quote: SocialSpark transformed our online presence completely. Our engagement is up 300% and we're seeing real business results!
-  author: Ã¢ SARAH J., FASHION BRAND OWNER
+  author: ÃÂ¢ SARAH J., FASHION BRAND OWNER
 stats:
   items:
     - value: 500+
@@ -101,11 +101,11 @@ contact:
   title: GET IN TOUCH
   subtitle: Ready to transform your social media presence? Let's create something amazing together!
   info:
-    - icon: Ã°
+    - icon: ÃÂ°
       text: 123 Social Ave, Digital City
-    - icon: Ã°Â±
+    - icon: ÃÂ°ÃÂ±
       text: +1 (555) 123-4567
-    - icon: Ã°Â§
+    - icon: ÃÂ°ÃÂ§
       text: hello@socialspark.com
   form:
     action: https://formspree.io/f/xanedekk
