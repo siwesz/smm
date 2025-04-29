@@ -1,46 +1,39 @@
 ---
-# Header
 logo: SocialSpark
 navigation:
   - label: Home
-    url: "#home"
+    url: '#home'
   - label: Services
-    url: "#services"
+    url: '#services'
   - label: Portfolio
-    url: "#portfolio"
+    url: '#portfolio'
   - label: Contact
-    url: "#contact"
-
-# Hero Section
+    url: '#contact'
 hero:
   title:
-    line1: LEVEL UP
+    line1: LEVEL
     line2: YOUR SOCIAL
     line3: MEDIA GAME
   description: Transform your brand with vibrant, eye-catching content that connects, engages, and converts your audience into loyal fans.
   button:
     text: Get Started
-    url: "#contact"
+    url: '#contact'
   image: https://images.pexels.com/photos/5775937/pexels-photo-5775937.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2
   sticker: Let's Connect!
   polaroidCaption: Social Media Magic
-
-# Services Section
 services:
   title: OUR SERVICES
   subtitle: Vibrant social media solutions to make your brand stand out from the crowd
   items:
-    - icon: 📱
+    - icon: ð±
       title: Content Creation
       description: Eye-catching visuals and engaging copy that resonates with your audience and reflects your brand's unique personality.
-    - icon: 📊
+    - icon: ð
       title: Strategy Development
       description: Data-driven approaches to maximize your social media ROI with customized plans that align with your goals.
-    - icon: 💰
+    - icon: ð°
       title: Paid Campaigns
       description: Targeted advertising that reaches your ideal customers with creative that converts scrollers into buyers.
-
-# This & That Section
 thisAndThat:
   title: THIS & THAT
   subtitle: How we approach social media marketing
@@ -57,8 +50,6 @@ thisAndThat:
       secondTerm: ENGAGEMENT
     - firstTerm: ANALYTICS
       secondTerm: INTUITION
-
-# Portfolio Section
 portfolio:
   title: OUR PORTFOLIO
   subtitle: Check out how we've transformed brands across different platforms
@@ -93,13 +84,9 @@ portfolio:
       title: Wellness Brand
     - image: https://images.pexels.com/photos/20617525/pexels-photo-20617525/free-photo-of-skiers-going-down-a-marked-trail.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2
       title: Travel Campaign
-
-# Testimonial Section
 testimonial:
-  quote: "SocialSpark transformed our online presence completely. Our engagement is up 300% and we're seeing real business results!"
-  author: "— SARAH J., FASHION BRAND OWNER"
-
-# Stats Section
+  quote: SocialSpark transformed our online presence completely. Our engagement is up 300% and we're seeing real business results!
+  author: â SARAH J., FASHION BRAND OWNER
 stats:
   items:
     - value: 500+
@@ -110,22 +97,18 @@ stats:
       label: AVERAGE GROWTH
     - value: 24/7
       label: SUPPORT
-
-# Contact Section
 contact:
   title: GET IN TOUCH
   subtitle: Ready to transform your social media presence? Let's create something amazing together!
   info:
-    - icon: 📍
+    - icon: ð
       text: 123 Social Ave, Digital City
-    - icon: 📱
+    - icon: ð±
       text: +1 (555) 123-4567
-    - icon: 📧
+    - icon: ð§
       text: hello@socialspark.com
   form:
     action: https://formspree.io/f/xanedekk
-
-# Footer
 footer:
   logo: Social<span>Spark</span>
   description: Igniting your social media presence with vibrant, engaging content that stands out.
@@ -133,16 +116,15 @@ footer:
     title: Follow Us
     icons:
       - type: facebook
-        url: "#"
+        url: '#'
       - type: instagram
-        url: "#"
+        url: '#'
       - type: x
-        url: "#"
+        url: '#'
       - type: youtube
-        url: "#"
-  copyright: "&copy; 2025 SocialSpark. All rights reserved."
-
-# Notification
+        url: '#'
+  copyright: '&copy; 2025 SocialSpark. All rights reserved.'
 notification:
   message: Thanks for reaching out! We'll get back to you soon.
 ---
+
