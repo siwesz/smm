@@ -25,13 +25,13 @@ services:
   title: OUR SERVICES
   subtitle: Vibrant social media solutions to make your brand stand out from the crowd
   items:
-    - icon: ÃÂ°ÃÂ±
+    - icon: ÃÃÂ°ÃÃÂ±
       title: Content Creation
       description: Eye-catching visuals and engaging copy that resonates with your audience and reflects your brand's unique personality.
-    - icon: ÃÂ°
+    - icon: ÃÃÂ°
       title: Strategy Development
       description: Data-driven approaches to maximize your social media ROI with customized plans that align with your goals.
-    - icon: ÃÂ°ÃÂ°
+    - icon: ÃÃÂ°ÃÃÂ°
       title: Paid Campaigns
       description: Targeted advertising that reaches your ideal customers with creative that converts scrollers into buyers.
 thisAndThat:
@@ -86,7 +86,7 @@ portfolio:
       title: Travel Campaign
 testimonial:
   quote: SocialSpark transformed our online presence completely. Our engagement is up 300% and we're seeing real business results!
-  author: ÃÂ¢ SARAH J., FASHION BRAND OWNER
+  author: ÃÃÂ¢ SARAH J., FASHION BRAND OWNER
 stats:
   items:
     - value: 500+
@@ -101,11 +101,11 @@ contact:
   title: GET IN TOUCH
   subtitle: Ready to transform your social media presence? Let's create something amazing together!
   info:
-    - icon: ÃÂ°
+    - icon: ÃÃÂ°
       text: 123 Social Ave, Digital City
-    - icon: ÃÂ°ÃÂ±
+    - icon: ÃÃÂ°ÃÃÂ±
       text: +1 (555) 123-4567
-    - icon: ÃÂ°ÃÂ§
+    - icon: ÃÃÂ°ÃÃÂ§
       text: hello@socialspark.com
   form:
     action: https://formspree.io/f/xanedekk
