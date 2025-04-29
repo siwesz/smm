@@ -90,10 +90,11 @@
   <!-- Load JS-YAML library for YAML parsing -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
   
-  <!-- Load our custom scripts - Make sure auth.js is loaded first -->
-  <script src="./js/auth.js"></script>
+  <!-- Load our custom scripts in the correct order -->
+  <script src="./js/global-state.js"></script>
   <script src="./js/github-api.js"></script>
   <script src="./js/editor.js"></script>
+  <script src="./js/auth.js"></script>
   <script src="./js/dashboard.js"></script>
 </body>
 </html>

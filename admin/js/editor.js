@@ -14,11 +14,36 @@ const Editor = (() => {
   let currentContent = ""
   let currentSha = ""
   let currentSection = null
+  let isInitialized = false
 
   /**
    * Initialize the editor
    */
   async function init() {
+    console.log("Editor initialization started")
+
+    // Mark as initialized first to prevent circular dependencies
+    isInitialized = true
+
+    // Register with global state
+    if (window.AdminState) {
+      window.AdminState.setInitialized("editor")
+    }
+
+    // Only proceed with full initialization if we're authenticated
+    if (!window.Auth || !window.Auth.isAuthenticated()) {
+      console.log("Editor init paused - not authenticated yet")
+      return
+    }
+
+    console.log("Editor proceeding with full initialization")
+    await loadContent()
+  }
+
+  /**
+   * Load content from GitHub
+   */
+  async function loadContent() {
     showLoading(true)
 
     try {
@@ -50,6 +75,8 @@ const Editor = (() => {
       if (firstSection) {
         firstSection.click()
       }
+
+      console.log("Editor content loaded successfully")
     } catch (error) {
       console.error("Error initializing editor:", error)
       showNotification("Failed to load content", "error")
@@ -1169,7 +1196,29 @@ const Editor = (() => {
   // Public API
   return {
     init,
+    loadContent,
     saveChanges,
     showPreview,
+    isInitialized: () => isInitialized,
   }
 })()
+
+// Make Editor available globally
+window.Editor = Editor
+
+// Auto-initialize if this script is loaded after DOM is ready
+if (document.readyState === "complete" || document.readyState === "interactive") {
+  console.log("Editor script loaded, DOM is ready")
+  setTimeout(() => {
+    if (Editor && typeof Editor.init === "function") {
+      Editor.init()
+    }
+  }, 100)
+} else {
+  console.log("Editor script loaded, waiting for DOM")
+  document.addEventListener("DOMContentLoaded", () => {
+    if (Editor && typeof Editor.init === "function") {
+      Editor.init()
+    }
+  })
+}

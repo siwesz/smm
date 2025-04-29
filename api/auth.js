@@ -1,9 +1,10 @@
-// This is a server-side API route to handle GitHub OAuth authentication
-export default async function handler(req, res) {
-  // GitHub OAuth credentials
-  const CLIENT_ID = "Ov23liO4HGDGaOohco1M"
-  const CLIENT_SECRET = "a11339943f24ac63c2719d9acd1074ecda1b0043"
+const fetch = require("node-fetch")
 
+// GitHub OAuth credentials
+const CLIENT_ID = process.env.GITHUB_CLIENT_ID || "Ov23liO4HGDGaOohco1M"
+const CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || "a11339943f24ac63c2719d9acd1074ecda1b0043"
+
+export default async function handler(req, res) {
   // Get the authorization code from the query parameters
   const { code } = req.query
 
