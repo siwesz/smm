@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub OAuth Proxy</title>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #FF3399 0%, #FF99CC 100%);
+            color: white;
+            text-align: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        p {
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        #token-display {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            word-break: break-all;
+            margin-bottom: 20px;
+            display: none;
+        }
+        button {
+            background: white;
+            color: #FF3399;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GitHub OAuth Proxy</h1>
+        <p>This page helps exchange the authorization code for an access token. You'll be redirected to the admin panel automatically.</p>
+        
+        <div id="spinner" class="spinner"></div>
+        <div id="token-display"></div>
+        <div id="message"></div>
+        
+        <button id="continue-btn">Continue to Admin Panel</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const spinner = document.getElementById('spinner');
+            const tokenDisplay = document.getElementById('token-display');
+            const message = document.getElementById('message');
+            const continueBtn = document.getElementById('continue-btn');
+            
+            // GitHub OAuth Configuration
+            const clientId = "Ov23liO4HGDGaOohco1M";
+            const redirectUri = window.location.origin + "/admin.html";
+            
+            if (code) {
+                spinner.style.display = 'block';
+                message.textContent = 'Exchanging code for access token...';
+                
+                // In a real application, this would be done server-side
+                // For demo purposes, we're showing how it would work
+                message.textContent = 'Code received! In a production environment, this would be exchanged for a token on your server.';
+                spinner.style.display = 'none';
+                
+                // Store the code in localStorage for the admin page to use
+                localStorage.setItem('github_auth_code', code);
+                
+                continueBtn.addEventListener('click', function() {
+                    window.location.href = 'admin.html?code=' + code;
+                });
+            } else {
+                message.textContent = 'No authorization code found in the URL.';
+                continueBtn.textContent = 'Go to Login';
+                continueBtn.addEventListener('click', function() {
+                    window.location.href = 'admin.html';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

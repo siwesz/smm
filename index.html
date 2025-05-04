@@ -27,8 +27,7 @@ box-sizing: border-box;
 }
 
 html {
-scroll-behavior: smooth; /* Enable native smooth scrolling */
-scroll-padding-top: 80px; /* Add padding for fixed header */
+scroll-behavior: smooth;
 }
 
 body {
@@ -267,14 +266,9 @@ transform-origin: right;
 transition: transform 0.3s ease;
 }
 
-nav ul li a:hover::after,
-nav ul li a.active::after {
+nav ul li a:hover::after {
 transform: scaleX(1);
 transform-origin: left;
-}
-
-nav ul li a.active {
-color: var(--hot-pink);
 }
 
 .menu-toggle {
@@ -1112,7 +1106,7 @@ z-index: 0;
 /* Completely revised footer layout with grid for proper spacing */
 .footer-content {
 display: grid;
-grid-template-columns: repeat(2, 1fr);
+grid-template-columns: repeat(3, 1fr);
 gap: 60px;
 margin-bottom: 40px;
 position: relative;
@@ -1148,10 +1142,11 @@ margin-bottom: 0;
 word-wrap: break-word;
 }
 
-.footer-social {
+.footer-links {
 text-align: center;
 }
 
+.footer-links h3,
 .footer-social h3 {
 font-size: 1.3rem;
 margin-bottom: 25px;
@@ -1162,6 +1157,7 @@ text-transform: uppercase;
 letter-spacing: 1px;
 }
 
+.footer-links h3::after,
 .footer-social h3::after {
 content: '';
 position: absolute;
@@ -1171,6 +1167,30 @@ background: var(--hot-pink);
 bottom: -10px;
 left: 50%;
 transform: translateX(-50%);
+}
+
+.footer-links ul li {
+margin-bottom: 15px;
+}
+
+.footer-links ul li a {
+font-weight: 500;
+font-size: 1.1rem;
+transition: all 0.3s ease;
+display: inline-block;
+text-transform: uppercase;
+letter-spacing: 1px;
+opacity: 0.8;
+}
+
+.footer-links ul li a:hover {
+color: var(--hot-pink);
+transform: translateX(5px);
+opacity: 1;
+}
+
+.footer-social {
+text-align: center;
 }
 
 /* Updated social icons to be more classy and professional */
@@ -1290,7 +1310,7 @@ margin-bottom: 0;
 
 /* Adjust footer for tablet */
 .footer-content {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 30px;
 }
 }
@@ -1471,46 +1491,24 @@ transform: translateY(0);
 .portfolio-item:nth-child(10) { --animation-order: 10; }
 .portfolio-item:nth-child(11) { --animation-order: 11; }
 .portfolio-item:nth-child(12) { --animation-order: 12; }
-
-/* Footer navigation link styles */
-.footer-nav-link {
-cursor: pointer;
-}
-
-.footer-nav-link:hover {
-color: var(--hot-pink);
-transform: translateX(5px);
-opacity: 1;
-}
-
-.footer-nav-link.active {
-color: var(--hot-pink);
-opacity: 1;
-}
-
-/* Active navigation link styles */
-nav ul li a.active {
-color: var(--hot-pink);
-}
-
-nav ul li a.active::after {
-transform: scaleX(1);
-}
 </style>
 </head>
 <body>
     <div class="notification" id="notification">
-        <p></p>
+        <p>Thanks for reaching out! We'll get back to you soon.</p>
     </div>
     
     <header>
         <div class="container">
             <div class="logo">
-                <h1 class="logo-text"></h1>
+                <h1 class="logo-text">Social<span>Spark</span></h1>
             </div>
             <nav>
                 <ul>
-                    <!-- Navigation items will be populated from Markdown -->
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#services">Services</a></li>
+                    <li><a href="#portfolio">Portfolio</a></li>
+                    <li><a href="#contact">Contact</a></li>
                 </ul>
             </nav>
             <div class="menu-toggle">
@@ -1526,13 +1524,13 @@ transform: scaleX(1);
         <div class="blob blob-2"></div>
         <div class="container">
             <div class="hero-content">
-                <h1></h1>
-                <p></p>
-                <a href="#" class="btn"></a>
+                <h1>LEVEL UP <span>YOUR SOCIAL</span> <span>MEDIA GAME</span></h1>
+                <p>Transform your brand with vibrant, eye-catching content that connects, engages, and converts your audience into loyal fans.</p>
+                <a href="#contact" class="btn">Get Started</a>
             </div>
             <div class="hero-image">
                 <div class="polaroid">
-                    <div class="hero-sticker"></div>
+                    <div class="hero-sticker">Let's Connect!</div>
                     <img src="https://images.pexels.com/photos/5775937/pexels-photo-5775937.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Social Media Marketing">
                 </div>
             </div>
@@ -1543,11 +1541,31 @@ transform: scaleX(1);
         <div class="grid-background"></div>
         <div class="container">
             <div class="section-header">
-                <h2></h2>
-                <p></p>
+                <h2>OUR SERVICES</h2>
+                <p>Vibrant social media solutions to make your brand stand out from the crowd</p>
             </div>
             <div class="services-grid">
-                <!-- Service cards will be populated from Markdown -->
+                <div class="service-card">
+                    <div class="service-icon">
+                        <span>📱</span>
+                    </div>
+                    <h3>Content Creation</h3>
+                    <p>Eye-catching visuals and engaging copy that resonates with your audience and reflects your brand's unique personality.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">
+                        <span>📊</span>
+                    </div>
+                    <h3>Strategy Development</h3>
+                    <p>Data-driven approaches to maximize your social media ROI with customized plans that align with your goals.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">
+                        <span>💰</span>
+                    </div>
+                    <h3>Paid Campaigns</h3>
+                    <p>Targeted advertising that reaches your ideal customers with creative that converts scrollers into buyers.</p>
+                </div>
             </div>
         </div>
     </section>
@@ -1555,11 +1573,34 @@ transform: scaleX(1);
     <section class="this-and-that">
         <div class="container">
             <div class="this-and-that-header">
-                <h2></h2>
-                <p></p>
+                <h2>THIS & THAT</h2>
+                <p>How we approach social media marketing</p>
             </div>
             <div class="this-and-that-grid">
-                <!-- This & That items will be populated from Markdown -->
+                <div class="this-and-that-item">
+                    <span>TRENDING</span>
+                    <span>TIMELESS</span>
+                </div>
+                <div class="this-and-that-item">
+                    <span>AUTHENTIC</span>
+                    <span>POLISHED</span>
+                </div>
+                <div class="this-and-that-item">
+                    <span>STRATEGY</span>
+                    <span>CREATIVITY</span>
+                </div>
+                <div class="this-and-that-item">
+                    <span>CONTENT</span>
+                    <span>COMMUNITY</span>
+                </div>
+                <div class="this-and-that-item">
+                    <span>GROWTH</span>
+                    <span>ENGAGEMENT</span>
+                </div>
+                <div class="this-and-that-item">
+                    <span>ANALYTICS</span>
+                    <span>INTUITION</span>
+                </div>
             </div>
         </div>
     </section>
@@ -1567,16 +1608,102 @@ transform: scaleX(1);
     <section id="portfolio" class="portfolio">
         <div class="container">
             <div class="section-header">
-                <h2></h2>
-                <p></p>
+                <h2>OUR PORTFOLIO</h2>
+                <p>Check out how we've transformed brands across different platforms</p>
             </div>
             <div class="mockup-showcase">
-                <!-- Phone mockups will be populated from Markdown -->
+                <div class="phone-mockup">
+                    <div class="phone-frame">
+                        <div class="screen">
+                            <img src="https://images.pexels.com/photos/7598018/pexels-photo-7598018.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Brand Strategy Example">
+                        </div>
+                    </div>
+                    <p>Brand Strategy</p>
+                </div>
+                <div class="phone-mockup">
+                    <div class="phone-frame">
+                        <div class="screen">
+                            <img src="https://images.pexels.com/photos/9748717/pexels-photo-9748717.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Luxury Content Example">
+                        </div>
+                    </div>
+                    <p>Luxury Content</p>
+                </div>
             </div>
             
-            <h3 class="portfolio-grid-title"></h3>
+            <h3 class="portfolio-grid-title">Our Social Media Work</h3>
             <div class="portfolio-grid">
-                <!-- Portfolio items will be populated from Markdown -->
+                <div class="portfolio-item fade-up">
+                    <img src="https://images.pexels.com/photos/3568520/pexels-photo-3568520.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Fashion Brand Social Media">
+                    <div class="portfolio-overlay">
+                        <h3>Fashion Brand</h3>
+                    </div>
+                </div>
+                <div class="portfolio-item fade-up">
+                    <img src="https://images.pexels.com/photos/6513382/pexels-photo-6513382.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Beauty Product Campaign">
+                    <div class="portfolio-overlay">
+                        <h3>Beauty Campaign</h3>
+                    </div>
+                </div>
+                <div class="portfolio-item fade-up">
+                    <img src="https://images.pexels.com/photos/5082579/pexels-photo-5082579.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Tech Startup Social Media">
+                    <div class="portfolio-overlay">
+                        <h3>Tech Startup</h3>
+                    </div>
+                </div>
+                <div class="portfolio-item fade-up">
+                    <img src="https://images.pexels.com/photos/3183197/pexels-photo-3183197.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Business Consulting">
+                    <div class="portfolio-overlay">
+                        <h3>Business Consulting</h3>
+                    </div>
+                </div>
+                <div class="portfolio-item fade-up">
+                    <img src="https://images.pexels.com/photos/18441150/pexels-photo-18441150/free-photo-of-illuminated-sign-on-building-facade-at-night.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Food Brand Marketing">
+                    <div class="portfolio-overlay">
+                        <h3>Food Brand</h3>
+                    </div>
+                </div>
+                <div class="portfolio-item fade-up">
+                    <img src="https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Startup Launch Campaign">
+                    <div class="portfolio-overlay">
+                        <h3>Startup Launch</h3>
+                    </div>
+                </div>
+                <div class="portfolio-item fade-up">
+                    <img src="https://images.pexels.com/photos/7779214/pexels-photo-7779214.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Influencer Marketing">
+                    <div class="portfolio-overlay">
+                        <h3>Influencer Marketing</h3>
+                    </div>
+                </div>
+                <div class="portfolio-item fade-up">
+                    <img src="https://images.pexels.com/photos/3182781/pexels-photo-3182781.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Product Launch">
+                    <div class="portfolio-overlay">
+                        <h3>Product Launch</h3>
+                    </div>
+                </div>
+                <div class="portfolio-item fade-up">
+                    <img src="https://images.pexels.com/photos/3182744/pexels-photo-3182744.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Lifestyle Brand">
+                    <div class="portfolio-overlay">
+                        <h3>Lifestyle Brand</h3>
+                    </div>
+                </div>
+                <div class="portfolio-item fade-up">
+                    <img src="https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="E-commerce Campaign">
+                    <div class="portfolio-overlay">
+                        <h3>E-commerce Campaign</h3>
+                    </div>
+                </div>
+                <div class="portfolio-item fade-up">
+                    <img src="https://images.pexels.com/photos/3182759/pexels-photo-3182759.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Wellness Brand">
+                    <div class="portfolio-overlay">
+                        <h3>Wellness Brand</h3>
+                    </div>
+                </div>
+                <div class="portfolio-item fade-up">
+                    <img src="https://images.pexels.com/photos/20617525/pexels-photo-20617525/free-photo-of-skiers-going-down-a-marked-trail.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Travel Campaign">
+                    <div class="portfolio-overlay">
+                        <h3>Travel Campaign</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -1584,8 +1711,8 @@ transform: scaleX(1);
     <section class="testimonial">
         <div class="container">
             <div class="testimonial-content">
-                <p class="testimonial-text"></p>
-                <p class="testimonial-author"></p>
+                <p class="testimonial-text">"SocialSpark transformed our online presence completely. Our engagement is up 300% and we're seeing real business results!"</p>
+                <p class="testimonial-author">— SARAH J., FASHION BRAND OWNER</p>
             </div>
         </div>
     </section>
@@ -1593,7 +1720,22 @@ transform: scaleX(1);
     <section id="stats" class="stats">
         <div class="container">
             <div class="stats-grid">
-                <!-- Stat cards will be populated from Markdown -->
+                <div class="stat-card">
+                    <h3>500+</h3>
+                    <p>HAPPY CLIENTS</p>
+                </div>
+                <div class="stat-card">
+                    <h3>15M+</h3>
+                    <p>IMPRESSIONS</p>
+                </div>
+                <div class="stat-card">
+                    <h3>300%</h3>
+                    <p>AVERAGE GROWTH</p>
+                </div>
+                <div class="stat-card">
+                    <h3>24/7</h3>
+                    <p>SUPPORT</p>
+                </div>
             </div>
         </div>
     </section>
@@ -1601,15 +1743,26 @@ transform: scaleX(1);
     <section id="contact" class="contact">
         <div class="container">
             <div class="section-header">
-                <h2></h2>
-                <p></p>
+                <h2>GET IN TOUCH</h2>
+                <p>Ready to transform your social media presence? Let's create something amazing together!</p>
             </div>
             <div class="contact-wrapper">
                 <div class="contact-info">
-                    <!-- Contact info items will be populated from Markdown -->
+                    <div class="contact-item">
+                        <div class="icon">📍</div>
+                        <p>123 Social Ave, Digital City</p>
+                    </div>
+                    <div class="contact-item">
+                        <div class="icon">📱</div>
+                        <p>+1 (555) 123-4567</p>
+                    </div>
+                    <div class="contact-item">
+                        <div class="icon">📧</div>
+                        <p>hello@socialspark.com</p>
+                    </div>
                 </div>
                 <div class="contact-form">
-                    <form id="contactForm" action="" method="POST">
+                    <form id="contactForm" action="https://formspree.io/f/xanedekk" method="POST">
                         <div class="form-group">
                             <input type="text" name="name" placeholder="Your Name" required>
                         </div>
@@ -1633,114 +1786,152 @@ transform: scaleX(1);
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
-                    <h2></h2>
-                    <p></p>
+                    <h2>Social<span>Spark</span></h2>
+                    <p>Igniting your social media presence with vibrant, engaging content that stands out.</p>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="#home">HOME</a></li>
+                        <li><a href="#services">SERVICES</a></li>
+                        <li><a href="#portfolio">PORTFOLIO</a></li>
+                        <li><a href="#contact">CONTACT</a></li>
+                    </ul>
                 </div>
                 <div class="footer-social">
-                    <h3></h3>
+                    <h3>Follow Us</h3>
                     <div class="social-icons">
-                        <!-- Social icons will be populated from Markdown -->
+                        <a href="#" class="social-icon facebook"></a>
+                        <a href="#" class="social-icon instagram"></a>
+                        <a href="#" class="social-icon x"></a>
+                        <a href="#" class="social-icon youtube"></a>
                     </div>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p></p>
+                <p>&copy; 2025 SocialSpark. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
-    <!-- Include the marked library -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
-    <!-- Include our custom marked.js file -->
-    <script src="./content/marked.js"></script>
-    
     <script>
-    // STANDALONE NAVIGATION SCRIPT - This is completely independent of other scripts
-    document.addEventListener('DOMContentLoaded', function() {
-        // Hard-coded navigation items for testing
-        const navItems = [
-            { label: 'Home', url: '#home' },
-            { label: 'Services', url: '#services' },
-            { label: 'Portfolio', url: '#portfolio' },
-            { label: 'Contact', url: '#contact' }
-        ];
-        
-        // Populate navigation
-        const navUl = document.querySelector('nav ul');
-        if (navUl) {
-            navUl.innerHTML = '';
-            navItems.forEach(item => {
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.href = item.url;
-                a.textContent = item.label;
-                
-                // Add click event listener directly to each link
-                a.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    console.log('Navigation link clicked:', item.url);
-                    
-                    const targetId = this.getAttribute('href');
-                    console.log('Target ID:', targetId);
-                    
-                    const targetSection = document.querySelector(targetId);
-                    console.log('Target section found:', !!targetSection);
-                    
-                    if (targetSection) {
-                        // Scroll to the section with offset for header
-                        const headerHeight = 80;
-                        const targetPosition = targetSection.getBoundingClientRect().top + window.pageYOffset - headerHeight;
-                        
-                        console.log('Scrolling to position:', targetPosition);
-                        
-                        window.scrollTo({
-                            top: targetPosition,
-                            behavior: 'smooth'
-                        });
-                        
-                        // Update active state
-                        document.querySelectorAll('nav ul li a').forEach(link => {
-                            link.classList.remove('active');
-                        });
-                        this.classList.add('active');
-                        
-                        // Close mobile menu if open
-                        const menuToggle = document.querySelector('.menu-toggle');
-                        const nav = document.querySelector('nav');
-                        if (menuToggle && menuToggle.classList.contains('active')) {
-                            menuToggle.classList.remove('active');
-                            nav.classList.remove('active');
-                        }
-                    }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile Menu Toggle
+            const menuToggle = document.querySelector('.menu-toggle');
+            const nav = document.querySelector('nav');
+            
+            if (menuToggle) {
+                menuToggle.addEventListener('click', function() {
+                    menuToggle.classList.toggle('active');
+                    nav.classList.toggle('active');
                 });
-                
-                li.appendChild(a);
-                navUl.appendChild(li);
+            }
+            
+            // Close mobile menu when clicking on a nav link
+            const navLinks = document.querySelectorAll('nav ul li a');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    menuToggle.classList.remove('active');
+                    nav.classList.remove('active');
+                });
             });
             
-            console.log('Navigation populated with items:', navItems.length);
-        }
-        
-        // Mobile Menu Toggle
-        const menuToggle = document.querySelector('.menu-toggle');
-        const nav = document.querySelector('nav');
-        
-        if (menuToggle) {
-            menuToggle.addEventListener('click', function() {
-                menuToggle.classList.toggle('active');
-                nav.classList.toggle('active');
-                console.log('Mobile menu toggled');
+            // Form submission handling
+            const contactForm = document.getElementById('contactForm');
+            const notification = document.getElementById('notification');
+            
+            if (contactForm) {
+                contactForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Get form data
+                    const formData = new FormData(contactForm);
+                    
+                    // Submit form using fetch
+                    fetch(contactForm.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        }
+                        throw new Error('Network response was not ok.');
+                    })
+                    .then(data => {
+                        // Show success notification
+                        showNotification();
+                        
+                        // Reset form
+                        contactForm.reset();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        // Show error notification
+                        showNotification('There was an error sending your message. Please try again.');
+                    });
+                });
+            }
+            
+            // Notification function
+            function showNotification(message = 'Thanks for reaching out! We\'ll get back to you soon.') {
+                // Update notification message
+                notification.querySelector('p').textContent = message;
+                
+                // Show notification
+                notification.classList.add('show');
+                
+                // Hide notification after 3 seconds
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Scroll animations
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('show-animation');
+                    }
+                });
+            }, {
+                threshold: 0.1
             });
-        }
-        
-        // Load the rest of the content
-        if (window.contentLoader && typeof window.contentLoader.loadContent === 'function') {
-            window.contentLoader.loadContent();
-        } else {
-            console.log('Content loader not available, only navigation is functional');
-        }
-    });
+            
+            // Observe all sections
+            document.querySelectorAll('section').forEach(section => {
+                section.classList.add('fade-in');
+                observer.observe(section);
+            });
+            
+            // Add animation classes
+            document.querySelectorAll('.service-card, .stat-card, .phone-mockup, .portfolio-item').forEach(element => {
+                element.classList.add('fade-up');
+                observer.observe(element);
+            });
+            
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+                    
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
     </script>
 </body>
 </html>
