@@ -217,6 +217,12 @@ body {
   align-items: center;
   justify-content: center;
   height: 300px;
+  text-align: center;
+}
+
+.editor-loading p {
+  margin-top: 15px;
+  color: var(--medium-gray);
 }
 
 .spinner {
@@ -263,6 +269,23 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: var(--gray);
+  border-radius: var(--border-radius);
+  border-left: 3px solid var(--hot-pink);
+}
+
+/* Special styling for logo text fields */
+.field-group[data-logo-part="main"],
+.field-group[data-logo-part="span"] {
+  border-left: 3px solid var(--soft-pink);
+  background-color: #fff9fc;
+}
+
+.field-group[data-logo-part="main"] label,
+.field-group[data-logo-part="span"] label {
+  color: var(--hot-pink);
 }
 
 .field-group label {
@@ -291,6 +314,86 @@ body {
   outline: none;
   border-color: var(--hot-pink);
   box-shadow: 0 0 0 2px rgba(255, 51, 153, 0.2);
+}
+
+/* Image field styling */
+.image-field-group {
+  padding-bottom: 20px;
+}
+
+.image-source-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.image-source-label span {
+  font-weight: 600;
+  color: var(--dark-gray);
+}
+
+.image-source-tabs {
+  display: flex;
+  gap: 5px;
+}
+
+.image-tab {
+  background: var(--light-gray);
+  border: none;
+  padding: 5px 15px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.image-tab.active {
+  background: var(--hot-pink);
+  color: var(--white);
+}
+
+.image-source-container {
+  margin-bottom: 15px;
+  padding: 15px;
+  background: var(--white);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-gray);
+}
+
+.image-source-container label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+input[type="file"] {
+  padding: 10px 0;
+  width: 100%;
+}
+
+.upload-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--light-gray);
+  border-radius: var(--border-radius);
+}
+
+.upload-status .spinner {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+.upload-status .success {
+  color: var(--success);
+}
+
+.upload-status .error {
+  color: var(--error);
 }
 
 .image-preview {
@@ -366,6 +469,53 @@ body {
   bottom: 30px;
   opacity: 1;
   visibility: visible;
+}
+
+.notification.error {
+  background-color: var(--error);
+  color: white;
+}
+
+.notification.warning {
+  background-color: var(--warning);
+  color: white;
+}
+
+/* Add styles for the editor sections */
+.editor-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-gray);
+}
+
+.editor-section h3 {
+  margin-bottom: 15px;
+  color: var(--hot-pink);
+  font-size: 1.1rem;
+}
+
+.editor-section .btn-secondary {
+  margin-top: 15px;
+}
+
+/* Add styles for newly added content */
+.admin-added-content,
+.admin-added-image,
+.admin-added-link {
+  border: 2px dashed var(--hot-pink);
+  padding: 10px;
+  margin: 10px 0;
+  display: block;
+}
+
+/* Add this to your existing CSS */
+.field-note {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 5px;
+  padding: 5px 10px;
+  background-color: #fff3f9;
+  border-left: 3px solid var(--hot-pink);
 }
 
 /* Responsive */
