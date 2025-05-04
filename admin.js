@@ -53,21 +53,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const code = urlParams.get("code")
 
     if (code) {
-      // Exchange code for access token using a proxy service
-      // Note: In a production environment, you should use your own server for this exchange
-      fetch(
-        `https://cors-anywhere.herokuapp.com/https://github.com/login/oauth/access_token?client_id=${config.clientId}&client_secret=${config.clientSecret}&code=${code}`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-          },
-        },
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.access_token) {
-            accessToken = data.access_token
+      // For local development, we'll use a different approach since we can't make server-side requests
+      // Store the code in localStorage and show a message to the user
+      localStorage.setItem("github_auth_code", code)
+
+      // Create a basic token exchange function that works client-side for demo purposes
+      // Note: In production, this should be done server-side
+      exchangeCodeForToken(code)
+        .then((token) => {
+          if (token) {
+            accessToken = token
             localStorage.setItem("github_access_token", accessToken)
 
             // Clean up URL
@@ -83,6 +78,69 @@ document.addEventListener("DOMContentLoaded", () => {
           console.error("Authentication error:", error)
           showLoginError("Authentication error. Please try again.")
         })
+    }
+  }
+
+  // Add this new function to handle token exchange
+  async function exchangeCodeForToken(code) {
+    // This is a client-side workaround - in production, use a server endpoint
+    // Using a CORS proxy to make the request
+    try {
+      const tokenUrl = `https://cors-anywhere.herokuapp.com/https://github.com/login/oauth/access_token`
+      const response = await fetch(tokenUrl, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          client_id: config.clientId,
+          client_secret: config.clientSecret,
+          code: code,
+        }),
+      })
+
+      const data = await response.json()
+      return data.access_token
+    } catch (error) {
+      console.error("Error exchanging code for token:", error)
+      // Fallback for demo purposes - in production, never do this
+      showLoginError("GitHub token exchange failed. For demo purposes, please enter a personal access token:")
+
+      // Create a simple input for demo purposes
+      const tokenInput = document.createElement("input")
+      tokenInput.type = "text"
+      tokenInput.placeholder = "Paste your GitHub personal access token"
+      tokenInput.style.width = "100%"
+      tokenInput.style.marginTop = "10px"
+      tokenInput.style.padding = "8px"
+
+      const submitButton = document.createElement("button")
+      submitButton.textContent = "Use Token"
+      submitButton.style.marginTop = "10px"
+      submitButton.style.padding = "8px 16px"
+
+      submitButton.addEventListener("click", () => {
+        const token = tokenInput.value.trim()
+        if (token) {
+          accessToken = token
+          localStorage.setItem("github_access_token", accessToken)
+          fetchUserData()
+        }
+      })
+
+      loginError.innerHTML = ""
+      loginError.appendChild(
+        document.createTextNode(
+          "GitHub token exchange failed. For demo purposes, please enter a personal access token:",
+        ),
+      )
+      loginError.appendChild(document.createElement("br"))
+      loginError.appendChild(tokenInput)
+      loginError.appendChild(document.createElement("br"))
+      loginError.appendChild(submitButton)
+
+      return null
     }
   }
 
