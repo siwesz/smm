@@ -659,7 +659,9 @@ document.addEventListener("DOMContentLoaded", () => {
     return fieldGroup
   }
 
-  // Create image field with both URL and upload options
+  // Add these functions for image handling
+
+  // Replace the existing createImageField function with this enhanced version
   function createImageField(image) {
     const fieldGroup = document.createElement("div")
     fieldGroup.className = "field-group image-field-group"
@@ -824,7 +826,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return fieldGroup
   }
 
-  // Function to upload an image to GitHub
+  // Add this new function for image uploads
   async function uploadImageToGitHub(file) {
     return new Promise((resolve, reject) => {
       if (!file) {
@@ -842,7 +844,7 @@ document.addEventListener("DOMContentLoaded", () => {
           // Generate a unique filename
           const timestamp = new Date().getTime()
           const filename = `${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`
-          const path = `${config.imagesFolder}/${filename}`
+          const path = `images/${filename}`
 
           // Upload to GitHub
           const response = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${path}`, {
@@ -938,6 +940,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Apply changes to HTML content
+  // Replace the applyChangesToHTML function with this version that ensures it doesn't modify the original structure
+  // This function should only update the specific content that was changed in the admin panel
+
   function applyChangesToHTML() {
     // Create a temporary DOM parser
     const parser = new DOMParser()
@@ -1034,6 +1039,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         })
       }
+
       // Update links
       if (sectionContent.links) {
         sectionContent.links.forEach((link) => {
@@ -1062,11 +1068,11 @@ document.addEventListener("DOMContentLoaded", () => {
       console.warn("applyNewElementsToHTML function not found. New elements will not be added.")
     }
 
-    // Convert back to string
+    // Convert back to string, preserving DOCTYPE and original structure
     return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML
   }
 
-  // Save changes to GitHub
+  // Replace the saveChangesToGitHub function to ensure it properly preserves the original structure
   function saveChangesToGitHub() {
     const updatedContent = applyChangesToHTML()
 
