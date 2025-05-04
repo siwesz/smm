@@ -52,32 +52,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search)
     const code = urlParams.get("code")
 
+    // Check if we have a token in localStorage (from manual entry)
+    const token = localStorage.getItem("github_access_token")
+
+    if (token) {
+      accessToken = token
+      fetchUserData()
+      return
+    }
+
     if (code) {
-      // For local development, we'll use a different approach since we can't make server-side requests
-      // Store the code in localStorage and show a message to the user
-      localStorage.setItem("github_auth_code", code)
-
-      // Create a basic token exchange function that works client-side for demo purposes
-      // Note: In production, this should be done server-side
-      exchangeCodeForToken(code)
-        .then((token) => {
-          if (token) {
-            accessToken = token
-            localStorage.setItem("github_access_token", accessToken)
-
-            // Clean up URL
-            window.history.replaceState({}, document.title, window.location.pathname)
-
-            // Get user data
-            fetchUserData()
-          } else {
-            showLoginError("Failed to authenticate with GitHub.")
-          }
-        })
-        .catch((error) => {
-          console.error("Authentication error:", error)
-          showLoginError("Authentication error. Please try again.")
-        })
+      // Redirect to auth-callback.html to handle the token exchange
+      window.location.href = `auth-callback.html?code=${code}`
     }
   }
 
@@ -721,7 +707,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Event Listeners
   githubLoginBtn.addEventListener("click", () => {
-    window.location.href = `https://github.com/login/oauth/authorize?client_id=${config.clientId}&redirect_uri=${encodeURIComponent(config.redirectUri)}&scope=${config.scope}`
+    // Use the values directly from admin-config.js instead of the local config variable
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=Ov23liO4HGDGaOohco1M&redirect_uri=${encodeURIComponent("http://127.0.0.1:5501/admin.html")}&scope=repo`
   })
 
   logoutBtn.addEventListener("click", logout)
