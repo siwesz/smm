@@ -707,8 +707,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Event Listeners
   githubLoginBtn.addEventListener("click", () => {
-    // Use the values directly from admin-config.js instead of the local config variable
-    window.location.href = `https://github.com/login/oauth/authorize?client_id=Ov23liO4HGDGaOohco1M&redirect_uri=${encodeURIComponent("http://127.0.0.1:5501/admin.html")}&scope=repo`
+    // Get the registered callback URL from GitHub OAuth app settings
+    // IMPORTANT: This must EXACTLY match what's in your GitHub OAuth app settings
+    const registeredRedirectUri = "http://127.0.0.1:5501/auth-callback.html"
+
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=Ov23liO4HGDGaOohco1M&redirect_uri=${encodeURIComponent(registeredRedirectUri)}&scope=repo`
   })
 
   logoutBtn.addEventListener("click", logout)
