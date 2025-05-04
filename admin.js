@@ -35,16 +35,16 @@ document.addEventListener("DOMContentLoaded", () => {
     { id: "footer", title: "Footer Section", selector: "footer" },
   ]
 
-  // Configuration - Replace with your own values
+  // Configuration with your actual GitHub details
   const config = {
-    clientId: "YOUR_GITHUB_CLIENT_ID",
-    clientSecret: "YOUR_GITHUB_CLIENT_SECRET",
-    redirectUri: window.location.origin, // Or your specific redirect URI
-    scope: "repo", // Adjust scopes as needed
-    owner: "YOUR_GITHUB_USERNAME",
-    repo: "YOUR_GITHUB_REPO_NAME",
-    contentFile: "index.html", // Or the name of your content file
-    mainBranch: "main", // Or your main branch name
+    clientId: "Ov23liO4HGDGaOohco1M",
+    clientSecret: "a11339943f24ac63c2719d9acd1074ecda1b0043",
+    redirectUri: "http://127.0.0.1:5501/auth-callback.html",
+    scope: "repo",
+    owner: "siwesz",
+    repo: "smm",
+    contentFile: "index.html",
+    mainBranch: "main",
   }
 
   // Check if we're returning from GitHub OAuth
