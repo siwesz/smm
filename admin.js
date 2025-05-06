@@ -378,17 +378,39 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       // Skip elements that are part of form controls or interactive elements
-      if (el.tagName === "BUTTON" || el.tagName === "LABEL" || el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+      if (
+        el.tagName === "BUTTON" ||
+        el.tagName === "LABEL" ||
+        el.tagName === "INPUT" ||
+        el.tagName === "TEXTAREA" ||
+        el.closest("form") || // Skip elements inside forms
+        el.closest(".contact-form") // Specifically skip contact form elements
+      ) {
         return
       }
 
       // Skip service icons and portfolio overlays
-      if (el.closest(".service-icon") || el.closest(".portfolio-overlay") || el.closest(".social-icon")) {
+      if (
+        el.closest(".service-icon") ||
+        el.closest(".portfolio-overlay") ||
+        el.closest(".social-icon") ||
+        el.closest(".hero-sticker") // Skip the hero sticker
+      ) {
         return
       }
 
       // Skip if this is a link and we're already capturing links separately
       if (el.tagName === "A" && el.textContent.trim() !== el.innerHTML.trim()) {
+        return
+      }
+
+      // Skip elements with background images or that are part of the header image
+      if (
+        el.closest(".hero-image") ||
+        el.closest(".polaroid") ||
+        el.closest(".phone-mockup") ||
+        el.closest(".portfolio-item")
+      ) {
         return
       }
 
@@ -466,14 +488,30 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // If there are siblings of the same type, add nth-child
+    // If there are siblings of the same type, add nth-of-type
     const parent = el.parentNode
     if (parent) {
-      const siblings = Array.from(parent.children).filter((child) => child.tagName === el.tagName)
+      const siblings = Array.from(parent.children).filter(
+        (child) => child.tagName === el.tagName && child.className === el.className,
+      )
 
       if (siblings.length > 1) {
         const index = siblings.indexOf(el)
-        path += `:nth-child(${index + 1})`
+        path += `:nth-of-type(${index + 1})`
+      }
+    }
+
+    // Make the selector more specific by adding parent information
+    if (parent && parent.tagName !== "BODY" && parent.tagName !== "HTML") {
+      const parentClasses = parent.className
+        .split(" ")
+        .filter((c) => c.trim() !== "" && !c.includes(":"))
+        .map((c) => c.trim())
+
+      if (parent.id) {
+        return `#${parent.id} > ${path}`
+      } else if (parentClasses.length > 0) {
+        return `.${parentClasses.join(".")} > ${path}`
       }
     }
 
@@ -1072,9 +1110,29 @@ document.addEventListener("DOMContentLoaded", () => {
             // Skip new elements and parts of composite elements
             if (text.isNew || text.part) return
 
+            // Use a more precise selector to ensure we only target the exact element
             const element = sectionElement.querySelector(text.path)
             if (element) {
-              element.textContent = text.content
+              // Only update the text content, preserving all other attributes and child elements
+              if (element.childNodes.length === 1 && element.childNodes[0].nodeType === Node.TEXT_NODE) {
+                // Simple case: element has only text content
+                element.textContent = text.content
+              } else {
+                // Complex case: element has child elements, only update text nodes
+                let hasUpdatedTextNode = false
+                element.childNodes.forEach((node) => {
+                  if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                    node.textContent = text.content
+                    hasUpdatedTextNode = true
+                  }
+                })
+
+                // If no text node was found to update, set the textContent directly
+                // but only if the element doesn't have important child elements
+                if (!hasUpdatedTextNode && !element.querySelector("img, form, input, button, textarea")) {
+                  element.textContent = text.content
+                }
+              }
             } else {
               console.warn(`Element not found for path: ${text.path}`)
             }
@@ -1091,12 +1149,14 @@ document.addEventListener("DOMContentLoaded", () => {
             // Skip new elements, they'll be handled separately
             if (image.isNew) return
 
+            // Use a more precise selector
             const element = sectionElement.querySelector(image.path)
-            if (element) {
+            if (element && element.tagName === "IMG") {
+              // Only update src and alt attributes, preserving all other attributes
               element.setAttribute("src", image.src)
               element.setAttribute("alt", image.alt)
             } else {
-              console.warn(`Element not found for path: ${image.path}`)
+              console.warn(`Image element not found for path: ${image.path}`)
             }
           } catch (error) {
             console.error(`Error updating image ${image.id}:`, error)
@@ -1111,12 +1171,18 @@ document.addEventListener("DOMContentLoaded", () => {
             // Skip new elements, they'll be handled separately
             if (link.isNew) return
 
+            // Use a more precise selector
             const element = sectionElement.querySelector(link.path)
-            if (element) {
+            if (element && element.tagName === "A") {
+              // Only update href and text content, preserving all other attributes and child elements
               element.setAttribute("href", link.href)
-              element.textContent = link.text
+
+              // Only update text if the link doesn't contain important elements
+              if (!element.querySelector("img, button, input")) {
+                element.textContent = link.text
+              }
             } else {
-              console.warn(`Element not found for path: ${link.path}`)
+              console.warn(`Link element not found for path: ${link.path}`)
             }
           } catch (error) {
             console.error(`Error updating link ${link.id}:`, error)
@@ -1284,10 +1350,26 @@ document.addEventListener("DOMContentLoaded", () => {
                   "info",
                 )
               }
+
+              // Add a download button to the notification
+              const notification = document.getElementById("notification")
+              const downloadButton = document.createElement("button")
+              downloadButton.textContent = "Download Updated HTML"
+              downloadButton.className = "refresh-button"
+              downloadButton.addEventListener("click", downloadUpdatedHTML)
+              notification.appendChild(downloadButton)
             })
             .catch(() => {
               // If we can't check, just show a generic message
               showNotification("Changes saved. Refresh the website to see your changes.")
+
+              // Add a download button to the notification
+              const notification = document.getElementById("notification")
+              const downloadButton = document.createElement("button")
+              downloadButton.textContent = "Download Updated HTML"
+              downloadButton.className = "refresh-button"
+              downloadButton.addEventListener("click", downloadUpdatedHTML)
+              notification.appendChild(downloadButton)
             })
             .finally(() => {
               saveAllBtn.textContent = "Save All Changes"
@@ -1352,4 +1434,38 @@ document.addEventListener("DOMContentLoaded", () => {
     const timestamp = new Date().getTime()
     window.open(`/?t=${timestamp}`, "_blank")
   })
+
+  // Add this function to download the updated HTML file
+  function downloadUpdatedHTML() {
+    const updatedContent = applyChangesToHTML()
+
+    // Create a blob with the updated content
+    const blob = new Blob([updatedContent], { type: "text/html" })
+
+    // Create a download link
+    const downloadLink = document.createElement("a")
+    downloadLink.href = URL.createObjectURL(blob)
+    downloadLink.download = "index.html"
+
+    // Append to body, click, and remove
+    document.body.appendChild(downloadLink)
+    downloadLink.click()
+    document.body.removeChild(downloadLink)
+
+    // Show notification
+    showNotification("Updated HTML file downloaded. Replace your local file with this one.")
+  }
+})
+
+// Add this after the sidebar-actions div is created in the HTML
+document.addEventListener("DOMContentLoaded", () => {
+  const sidebarActions = document.querySelector(".sidebar-actions")
+  if (sidebarActions) {
+    const downloadBtn = document.createElement("button")
+    downloadBtn.id = "download-html-btn"
+    downloadBtn.className = "btn-secondary"
+    downloadBtn.textContent = "Download HTML"
+    downloadBtn.addEventListener("click", downloadUpdatedHTML)
+    sidebarActions.appendChild(downloadBtn)
+  }
 })

@@ -109,11 +109,17 @@ function applyNewElementsToHTML(doc) {
           newElement.textContent = text.content
           newElement.className = "admin-added-content"
 
-          // Add it to the section
-          sectionElement.appendChild(newElement)
+          // Add a data attribute to mark this as admin-added content
+          newElement.setAttribute("data-admin-added", "true")
+          newElement.setAttribute("data-admin-added-time", new Date().toISOString())
+
+          // Add it to the section - append to the end to avoid disrupting layout
+          // Find a suitable container within the section
+          const container = sectionElement.querySelector(".container") || sectionElement
+          container.appendChild(newElement)
 
           // Update the path to the actual DOM path
-          text.path = `.admin-added-content:last-child`
+          text.path = `[data-admin-added="true"][data-admin-added-time="${newElement.getAttribute("data-admin-added-time")}"]`
           text.isNew = false
         }
       })
@@ -129,11 +135,17 @@ function applyNewElementsToHTML(doc) {
           newElement.alt = image.alt
           newElement.className = "admin-added-image"
 
-          // Add it to the section
-          sectionElement.appendChild(newElement)
+          // Add a data attribute to mark this as admin-added content
+          newElement.setAttribute("data-admin-added", "true")
+          newElement.setAttribute("data-admin-added-time", new Date().toISOString())
+
+          // Add it to the section - append to the end to avoid disrupting layout
+          // Find a suitable container within the section
+          const container = sectionElement.querySelector(".container") || sectionElement
+          container.appendChild(newElement)
 
           // Update the path to the actual DOM path
-          image.path = `.admin-added-image:last-child`
+          image.path = `[data-admin-added="true"][data-admin-added-time="${newElement.getAttribute("data-admin-added-time")}"]`
           image.isNew = false
         }
       })
@@ -149,11 +161,17 @@ function applyNewElementsToHTML(doc) {
           newElement.textContent = link.text
           newElement.className = "admin-added-link"
 
-          // Add it to the section
-          sectionElement.appendChild(newElement)
+          // Add a data attribute to mark this as admin-added content
+          newElement.setAttribute("data-admin-added", "true")
+          newElement.setAttribute("data-admin-added-time", new Date().toISOString())
+
+          // Add it to the section - append to the end to avoid disrupting layout
+          // Find a suitable container within the section
+          const container = sectionElement.querySelector(".container") || sectionElement
+          container.appendChild(newElement)
 
           // Update the path to the actual DOM path
-          link.path = `.admin-added-link:last-child`
+          link.path = `[data-admin-added="true"][data-admin-added-time="${newElement.getAttribute("data-admin-added-time")}"]`
           link.isNew = false
         }
       })
