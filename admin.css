@@ -467,10 +467,34 @@ input[type="file"] {
   visibility: hidden;
 }
 
+.notification .refresh-button {
+  background: white;
+  color: var(--hot-pink);
+  border: none;
+  padding: 5px 15px;
+  border-radius: 20px;
+  margin-top: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.notification .refresh-button:hover {
+  background: var(--light-gray);
+  transform: translateY(-2px);
+}
+
+.notification.info {
+  background-color: #2196f3;
+  color: white;
+}
+
 .notification.show {
   bottom: 30px;
   opacity: 1;
   visibility: visible;
+  z-index: 2000;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
 }
 
 .notification.error {

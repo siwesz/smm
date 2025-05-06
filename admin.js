@@ -171,7 +171,28 @@ document.addEventListener("DOMContentLoaded", () => {
     loginError.style.display = "block"
   }
 
-  // Show admin dashboard
+  // Add this function to check GitHub Pages status
+  async function checkGitHubPagesStatus() {
+    try {
+      const response = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/pages`, {
+        headers: {
+          Authorization: `token ${accessToken}`,
+        },
+      })
+
+      if (response.status === 404) {
+        // GitHub Pages not enabled
+        showNotification(
+          "GitHub Pages is not enabled for this repository. Changes may not be visible immediately.",
+          "warning",
+        )
+      }
+    } catch (error) {
+      console.error("Error checking GitHub Pages status:", error)
+    }
+  }
+
+  // Call this function when the admin dashboard loads
   function showAdminDashboard() {
     if (userData && userData.login) {
       userName.textContent = userData.name || userData.login
@@ -183,6 +204,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Populate section list
       populateSectionList()
+
+      // Check GitHub Pages status
+      checkGitHubPagesStatus()
     } else {
       logout()
     }
@@ -943,6 +967,46 @@ document.addEventListener("DOMContentLoaded", () => {
   // Replace the applyChangesToHTML function with this version that ensures it doesn't modify the original structure
   // This function should only update the specific content that was changed in the admin panel
 
+  // Add this function to help with cache busting
+  function addCacheBustingMeta() {
+    // Create a temporary DOM parser
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(websiteContent, "text/html")
+
+    // Check if there's already a cache-control meta tag
+    let metaTag = doc.querySelector('meta[http-equiv="Cache-Control"]')
+
+    if (!metaTag) {
+      // Create a new meta tag for cache control
+      metaTag = doc.createElement("meta")
+      metaTag.setAttribute("http-equiv", "Cache-Control")
+      metaTag.setAttribute("content", "no-cache, no-store, must-revalidate")
+
+      // Add it to the head
+      const head = doc.querySelector("head")
+      if (head) {
+        head.appendChild(metaTag)
+      }
+
+      // Also add pragma and expires for older browsers
+      const pragmaMeta = doc.createElement("meta")
+      pragmaMeta.setAttribute("http-equiv", "Pragma")
+      pragmaMeta.setAttribute("content", "no-cache")
+      head.appendChild(pragmaMeta)
+
+      const expiresMeta = doc.createElement("meta")
+      expiresMeta.setAttribute("http-equiv", "Expires")
+      expiresMeta.setAttribute("content", "0")
+      head.appendChild(expiresMeta)
+
+      // Convert back to string
+      websiteContent = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML
+    }
+
+    return websiteContent
+  }
+
+  // Update applyChangesToHTML to include cache busting
   function applyChangesToHTML() {
     // Create a temporary DOM parser
     const parser = new DOMParser()
@@ -1068,13 +1132,25 @@ document.addEventListener("DOMContentLoaded", () => {
       console.warn("applyNewElementsToHTML function not found. New elements will not be added.")
     }
 
+    // Add a timestamp comment to force cache invalidation
+    const timestamp = new Date().toISOString()
+    const timestampComment = doc.createComment(`Last updated: ${timestamp}`)
+    const body = doc.querySelector("body")
+    if (body) {
+      body.appendChild(timestampComment)
+    }
+
     // Convert back to string, preserving DOCTYPE and original structure
     return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML
   }
 
   // Replace the saveChangesToGitHub function to ensure it properly preserves the original structure
+  // Replace the saveChangesToGitHub function with this improved version
   function saveChangesToGitHub() {
     const updatedContent = applyChangesToHTML()
+
+    // Show loading notification
+    showNotification("Saving changes to GitHub...", "info")
 
     // First, get the current file to get its SHA
     fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`, {
@@ -1082,7 +1158,12 @@ document.addEventListener("DOMContentLoaded", () => {
         Authorization: `token ${accessToken}`,
       },
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch file info: ${response.status} ${response.statusText}`)
+        }
+        return response.json()
+      })
       .then((data) => {
         // Now update the file with the new content
         return fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`, {
@@ -1101,36 +1182,61 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .then((response) => {
         if (!response.ok) {
-          throw new Error("Failed to save changes")
+          throw new Error(`Failed to save changes: ${response.status} ${response.statusText}`)
         }
         return response.json()
       })
-      .then(() => {
+      .then((data) => {
+        console.log("GitHub update successful:", data)
         websiteContent = updatedContent
-        showNotification("Changes saved successfully!")
+        showNotification("Changes saved successfully! Refresh the website to see your changes.")
+
+        // Add a refresh button to the notification
+        const notification = document.getElementById("notification")
+        const refreshButton = document.createElement("button")
+        refreshButton.textContent = "Refresh Website"
+        refreshButton.className = "refresh-button"
+        refreshButton.addEventListener("click", () => {
+          window.open("/", "_blank")
+        })
+
+        notification.appendChild(refreshButton)
       })
       .catch((error) => {
         console.error("Error saving changes:", error)
-        showNotification("Failed to save changes. Please try again.", "error")
+        showNotification(`Failed to save changes: ${error.message}`, "error")
       })
   }
 
   // Show notification
+  // Replace the showNotification function with this improved version
   function showNotification(message, type = "success") {
+    // Clear any existing content
     notificationMessage.textContent = message
     notification.className = "notification"
+
+    // Remove any existing buttons
+    const existingButton = notification.querySelector(".refresh-button")
+    if (existingButton) {
+      existingButton.remove()
+    }
 
     if (type === "error") {
       notification.classList.add("error")
     } else if (type === "warning") {
       notification.classList.add("warning")
+    } else if (type === "info") {
+      notification.classList.add("info")
     }
 
     notification.classList.add("show")
 
-    setTimeout(() => {
-      notification.classList.remove("show")
-    }, 3000)
+    // For success messages, don't auto-hide if it's about saving changes
+    if (type === "success" && !message.includes("saved successfully")) {
+      setTimeout(() => {
+        notification.classList.remove("show")
+      }, 5000)
+    }
   }
 
   // Logout function
@@ -1158,13 +1264,47 @@ document.addEventListener("DOMContentLoaded", () => {
     saveChangesToGitHub()
   })
 
+  // Update the saveAllBtn click handler
   saveAllBtn.addEventListener("click", () => {
+    // Show loading state
+    saveAllBtn.textContent = "Saving..."
+    saveAllBtn.disabled = true
+
     saveChangesToGitHub()
+      .then(() => {
+        // Check if changes are deployed after a short delay
+        setTimeout(() => {
+          checkIfChangesDeployed()
+            .then((deployed) => {
+              if (deployed) {
+                showNotification("Changes saved and deployed successfully!")
+              } else {
+                showNotification(
+                  "Changes saved but may take a moment to deploy. Use the refresh button to check.",
+                  "info",
+                )
+              }
+            })
+            .catch(() => {
+              // If we can't check, just show a generic message
+              showNotification("Changes saved. Refresh the website to see your changes.")
+            })
+            .finally(() => {
+              saveAllBtn.textContent = "Save All Changes"
+              saveAllBtn.disabled = false
+            })
+        }, 2000)
+      })
+      .catch(() => {
+        saveAllBtn.textContent = "Save All Changes"
+        saveAllBtn.disabled = false
+      })
   })
 
   previewBtn.addEventListener("click", () => {
-    // Open the main site in a new tab
-    window.open("/", "_blank")
+    // Open the main site in a new tab with cache-busting parameter
+    const timestamp = new Date().getTime()
+    window.open(`/?t=${timestamp}`, "_blank")
   })
 
   // Initialize
@@ -1173,4 +1313,43 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     handleAuthCallback()
   }
+
+  // Add this function to check if changes have been deployed
+  function checkIfChangesDeployed() {
+    return new Promise((resolve, reject) => {
+      // Get the current content of the index.html file
+      fetch(
+        `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}?ref=${config.mainBranch}`,
+        {
+          headers: {
+            Authorization: `token ${accessToken}`,
+            Accept: "application/vnd.github.v3.raw",
+          },
+          cache: "no-store", // Prevent caching
+        },
+      )
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Failed to fetch latest content")
+          }
+          return response.text()
+        })
+        .then((content) => {
+          // Compare with our local version
+          const deployed = content === websiteContent
+          resolve(deployed)
+        })
+        .catch((error) => {
+          console.error("Error checking deployment:", error)
+          reject(error)
+        })
+    })
+  }
+
+  // Update the preview button click handler
+  previewBtn.addEventListener("click", () => {
+    // Open the main site in a new tab with cache-busting parameter
+    const timestamp = new Date().getTime()
+    window.open(`/?t=${timestamp}`, "_blank")
+  })
 })
