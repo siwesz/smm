@@ -241,6 +241,13 @@ body {
   }
 }
 
+/* Add back the editor-actions styling */
+.editor-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Make sure the editor header has the right layout */
 .editor-header {
   display: flex;
   justify-content: space-between;
@@ -448,6 +455,23 @@ input[type="file"] {
   transform: translateY(-2px);
 }
 
+.btn-deploy {
+  background: var(--success);
+  color: var(--white);
+  border: none;
+  padding: 10px 15px;
+  border-radius: var(--border-radius);
+  font-family: var(--font-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-deploy:hover {
+  background: #3d8b40;
+  transform: translateY(-2px);
+}
+
 /* Notification */
 .notification {
   position: fixed;
@@ -542,6 +566,90 @@ input[type="file"] {
   padding: 5px 10px;
   background-color: #fff3f9;
   border-left: 3px solid var(--hot-pink);
+}
+
+/* Add these styles for the deployment progress bar */
+
+.deployment-progress {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #fff;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--light-gray);
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.deployment-progress h3 {
+  color: var(--dark-gray);
+  margin-bottom: 10px;
+  font-size: 1rem;
+  font-family: var(--font-body);
+}
+
+.deployment-progress p {
+  margin-bottom: 15px;
+  color: var(--medium-gray);
+  font-size: 0.9rem;
+}
+
+.progress-container {
+  height: 10px;
+  background-color: var(--light-gray);
+  border-radius: 5px;
+  margin: 15px 0;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--hot-pink);
+  border-radius: 5px;
+  transition: width 0.5s ease;
+}
+
+.progress-text {
+  font-size: 0.85rem;
+  color: var(--medium-gray);
+}
+
+.deployment-actions {
+  margin-top: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.view-site-btn,
+.download-html-btn {
+  padding: 8px 15px;
+  background-color: var(--hot-pink);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.view-site-btn:hover,
+.download-html-btn:hover {
+  transform: translateY(-2px);
+  background-color: var(--soft-pink);
+}
+
+/* Status indicator for saved but not deployed changes */
+.changes-status {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 10px;
+  background-color: var(--light-pink);
+  color: var(--hot-pink);
 }
 
 /* Responsive */

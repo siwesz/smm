@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const editorLoading = document.getElementById("editor-loading")
   const editorContent = document.getElementById("editor-content")
   const saveSectionBtn = document.getElementById("save-section-btn")
-  const saveAllBtn = document.getElementById("save-all-btn")
+  const deployBtn = document.getElementById("deploy-btn") // Renamed from saveAllBtn
   const previewBtn = document.getElementById("preview-btn")
   const notification = document.getElementById("notification")
   const notificationMessage = document.getElementById("notification-message")
@@ -23,6 +23,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let websiteContent = null
   let originalContent = null
   let currentSection = null
+  let hasUnsavedChanges = false
+  let hasSavedChanges = false
   const editableContent = {}
   const contentSections = [
     { id: "header", title: "Header", selector: "header" },
@@ -183,12 +185,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (response.status === 404) {
         // GitHub Pages not enabled
         showNotification(
-          "GitHub Pages is not enabled for this repository. Changes may not be visible immediately.",
+          "Pages service is not enabled for this repository. Changes may not be visible immediately.",
           "warning",
         )
       }
     } catch (error) {
-      console.error("Error checking GitHub Pages status:", error)
+      console.error("Error checking pages status:", error)
     }
   }
 
@@ -219,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Show loading message
     const loadingMessage = document.createElement("p")
-    loadingMessage.textContent = "Fetching content from GitHub..."
+    loadingMessage.textContent = "Fetching content..."
     editorLoading.appendChild(loadingMessage)
 
     // Fetch the index.html file from GitHub
@@ -264,10 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .catch((error) => {
         console.error("Error loading website content:", error)
         loadingMessage.textContent = `Error: ${error.message}`
-        showNotification(
-          "Failed to load website content. Please check your GitHub token and repository details.",
-          "error",
-        )
+        showNotification("Failed to load website content. Please check your token and repository details.", "error")
       })
   }
 
@@ -551,12 +550,14 @@ document.addEventListener("DOMContentLoaded", () => {
         script.onload = () => {
           if (typeof addNewTextElement === "function") {
             addNewTextElement(section.id)
+            markUnsavedChanges()
           } else {
             console.error("addNewTextElement is not a function after script load")
           }
         }
       } else {
         addNewTextElement(section.id)
+        markUnsavedChanges()
       }
     })
     textFieldsContainer.appendChild(addTextBtn)
@@ -589,12 +590,14 @@ document.addEventListener("DOMContentLoaded", () => {
         script.onload = () => {
           if (typeof addNewImage === "function") {
             addNewImage(section.id)
+            markUnsavedChanges()
           } else {
             console.error("addNewImage is not a function after script load")
           }
         }
       } else {
         addNewImage(section.id)
+        markUnsavedChanges()
       }
     })
     imageFieldsContainer.appendChild(addImageBtn)
@@ -627,16 +630,48 @@ document.addEventListener("DOMContentLoaded", () => {
         script.onload = () => {
           if (typeof addNewLink === "function") {
             addNewLink(section.id)
+            markUnsavedChanges()
           } else {
             console.error("addNewLink is not a function after script load")
           }
         }
       } else {
         addNewLink(section.id)
+        markUnsavedChanges()
       }
     })
     linkFieldsContainer.appendChild(addLinkBtn)
     editorFields.appendChild(linkFieldsContainer)
+  }
+
+  // Mark that there are unsaved changes
+  function markUnsavedChanges() {
+    if (!hasUnsavedChanges) {
+      hasUnsavedChanges = true
+
+      // Add indicator to the section
+      if (currentSection) {
+        const sectionItem = document.querySelector(`.section-list li[data-section-id="${currentSection.id}"]`)
+        if (sectionItem) {
+          sectionItem.classList.add("has-unsaved-changes")
+        }
+      }
+    }
+  }
+
+  // Mark that there are saved but not deployed changes
+  function markSavedChanges() {
+    hasSavedChanges = true
+
+    // Update the deploy button to show there are changes to deploy
+    if (deployBtn) {
+      if (!deployBtn.querySelector(".changes-status")) {
+        const statusIndicator = document.createElement("span")
+        statusIndicator.className = "changes-status"
+        statusIndicator.textContent = "Changes ready"
+        deployBtn.appendChild(statusIndicator)
+      }
+    }
   }
 
   // Create text field
@@ -676,6 +711,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const textItem = sectionContent.texts.find((t) => t.id === text.id)
       if (textItem) {
         textItem.content = input.value
+        markUnsavedChanges()
       }
     })
 
@@ -736,6 +772,7 @@ document.addEventListener("DOMContentLoaded", () => {
         imageItem.src = urlInput.value
         // Update preview
         previewImg.src = urlInput.value
+        markUnsavedChanges()
       }
     })
 
@@ -779,6 +816,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Update URL input and preview
             urlInput.value = imageUrl
             previewImg.src = imageUrl
+            markUnsavedChanges()
           }
 
           // Show success message
@@ -818,6 +856,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const imageItem = sectionContent.images.find((i) => i.id === image.id)
       if (imageItem) {
         imageItem.alt = altInput.value
+        markUnsavedChanges()
       }
     })
 
@@ -932,6 +971,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const linkItem = sectionContent.links.find((l) => l.id === link.id)
       if (linkItem) {
         linkItem.href = urlInput.value
+        markUnsavedChanges()
       }
     })
 
@@ -955,6 +995,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const linkItem = sectionContent.links.find((l) => l.id === link.id)
       if (linkItem) {
         linkItem.text = textInput.value
+        markUnsavedChanges()
       }
     })
 
@@ -1178,13 +1219,39 @@ document.addEventListener("DOMContentLoaded", () => {
     return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML
   }
 
-  // Replace the saveChangesToGitHub function to ensure it properly preserves the original structure
-  // Replace the saveChangesToGitHub function with this improved version
-  function saveChangesToGitHub() {
-    const updatedContent = applyChangesToHTML()
+  // Save section changes without deploying
+  function saveSection() {
+    if (!hasUnsavedChanges) {
+      showNotification("No changes to save", "info")
+      return
+    }
+
+    // Apply changes to the HTML content
+    websiteContent = applyChangesToHTML()
+
+    // Reset unsaved changes flag
+    hasUnsavedChanges = false
+
+    // Mark that we have saved changes that need to be deployed
+    markSavedChanges()
+
+    // Remove unsaved indicators from sections
+    document.querySelectorAll(".section-list li.has-unsaved-changes").forEach((item) => {
+      item.classList.remove("has-unsaved-changes")
+    })
+
+    showNotification("Section saved. Click 'Deploy' when you're ready to publish all changes.", "success")
+  }
+
+  // Deploy all saved changes to GitHub
+  function deployChanges() {
+    if (!hasSavedChanges) {
+      showNotification("No saved changes to deploy", "info")
+      return
+    }
 
     // Show loading notification
-    showNotification("Saving changes to GitHub...", "info")
+    showNotification("Deploying changes...", "info")
 
     // First, get the current file to get its SHA
     fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`, {
@@ -1208,7 +1275,7 @@ document.addEventListener("DOMContentLoaded", () => {
           },
           body: JSON.stringify({
             message: "Update website content via admin panel",
-            content: btoa(unescape(encodeURIComponent(updatedContent))),
+            content: btoa(unescape(encodeURIComponent(websiteContent))),
             sha: data.sha,
             branch: config.mainBranch,
           }),
@@ -1222,28 +1289,29 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .then((data) => {
         console.log("GitHub update successful:", data)
-        websiteContent = updatedContent
-        showNotification("Changes saved successfully! Refresh the website to see your changes.")
+        originalContent = websiteContent
 
-        // Add a refresh button to the notification
-        const notification = document.getElementById("notification")
-        const refreshButton = document.createElement("button")
-        refreshButton.textContent = "Refresh Website"
-        refreshButton.className = "refresh-button"
-        refreshButton.addEventListener("click", () => {
-          window.open("/", "_blank")
-        })
+        // Reset saved changes flag
+        hasSavedChanges = false
 
-        notification.appendChild(refreshButton)
+        // Remove the "Changes ready" indicator from the deploy button
+        const statusIndicator = deployBtn.querySelector(".changes-status")
+        if (statusIndicator) {
+          statusIndicator.remove()
+        }
+
+        showNotification("Changes deployed successfully! Tracking progress...")
+
+        // Start the deployment progress tracking
+        startDeploymentProgress()
       })
       .catch((error) => {
-        console.error("Error saving changes:", error)
-        showNotification(`Failed to save changes: ${error.message}`, "error")
+        console.error("Error deploying changes:", error)
+        showNotification(`Failed to deploy changes: ${error.message}`, "error")
       })
   }
 
   // Show notification
-  // Replace the showNotification function with this improved version
   function showNotification(message, type = "success") {
     // Clear any existing content
     notificationMessage.textContent = message
@@ -1253,6 +1321,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const existingButton = notification.querySelector(".refresh-button")
     if (existingButton) {
       existingButton.remove()
+    }
+
+    // Remove any existing deployment progress
+    const existingProgress = notification.querySelector(".deployment-progress")
+    if (existingProgress) {
+      existingProgress.remove()
     }
 
     if (type === "error") {
@@ -1265,8 +1339,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     notification.classList.add("show")
 
-    // For success messages, don't auto-hide if it's about saving changes
-    if (type === "success" && !message.includes("saved successfully")) {
+    // For success messages, auto-hide after 5 seconds
+    if (type === "success" && !message.includes("deployed successfully")) {
       setTimeout(() => {
         notification.classList.remove("show")
       }, 5000)
@@ -1283,88 +1357,95 @@ document.addEventListener("DOMContentLoaded", () => {
     loginScreen.classList.remove("hidden")
   }
 
-  // Event Listeners
-  githubLoginBtn.addEventListener("click", () => {
-    // Get the registered callback URL from GitHub OAuth app settings
-    // IMPORTANT: This must EXACTLY match what's in your GitHub OAuth app settings
-    const registeredRedirectUri = "http://127.0.0.1:5501/auth-callback.html"
+  // Start deployment progress tracking
+  function startDeploymentProgress() {
+    const deploymentDuration = 60000 // 60 seconds total
+    const updateInterval = 1000 // Update every second
+    const steps = deploymentDuration / updateInterval
+    let currentStep = 0
 
-    window.location.href = `https://github.com/login/oauth/authorize?client_id=Ov23liO4HGDGaOohco1M&redirect_uri=${encodeURIComponent(registeredRedirectUri)}&scope=repo`
-  })
+    // Create deployment progress element
+    const deploymentProgress = document.createElement("div")
+    deploymentProgress.className = "deployment-progress"
+    deploymentProgress.innerHTML = `
+      <h3>Deployment in Progress</h3>
+      <p>Your changes are being published. This typically takes about a minute.</p>
+      <div class="progress-container">
+        <div class="progress-bar" style="width: 0%"></div>
+      </div>
+      <p class="progress-text">0% - Starting deployment...</p>
+    `
 
-  logoutBtn.addEventListener("click", logout)
+    // Add to the notification area
+    notification.appendChild(deploymentProgress)
 
-  saveSectionBtn.addEventListener("click", () => {
-    saveChangesToGitHub()
-  })
+    const progressBar = deploymentProgress.querySelector(".progress-bar")
+    const progressText = deploymentProgress.querySelector(".progress-text")
 
-  // Update the saveAllBtn click handler
-  saveAllBtn.addEventListener("click", () => {
-    // Show loading state
-    saveAllBtn.textContent = "Saving..."
-    saveAllBtn.disabled = true
+    // Start progress animation
+    const progressInterval = setInterval(() => {
+      currentStep++
+      const progressPercent = Math.min((currentStep / steps) * 100, 100)
+      progressBar.style.width = `${progressPercent}%`
 
-    saveChangesToGitHub()
-      .then(() => {
-        // Check if changes are deployed after a short delay
+      // Update progress text
+      if (progressPercent < 25) {
+        progressText.textContent = `${Math.round(progressPercent)}% - Preparing your changes...`
+      } else if (progressPercent < 50) {
+        progressText.textContent = `${Math.round(progressPercent)}% - Building your website...`
+      } else if (progressPercent < 75) {
+        progressText.textContent = `${Math.round(progressPercent)}% - Almost there...`
+      } else {
+        progressText.textContent = `${Math.round(progressPercent)}% - Finalizing deployment...`
+      }
+
+      // When progress is complete
+      if (currentStep >= steps) {
+        clearInterval(progressInterval)
+
+        // Show completion message
+        deploymentProgress.innerHTML = `
+          <h3>Deployment Complete!</h3>
+          <p>Your changes are now live.</p>
+          <div class="deployment-actions">
+            <button class="view-site-btn">View Your Site</button>
+            <button class="download-html-btn">Download HTML</button>
+          </div>
+        `
+
+        // Add event listeners to buttons
+        const viewSiteBtn = deploymentProgress.querySelector(".view-site-btn")
+        viewSiteBtn.addEventListener("click", () => {
+          const timestamp = new Date().getTime()
+          window.open(`https://${config.owner}.github.io/${config.repo}/?t=${timestamp}`, "_blank")
+        })
+
+        const downloadBtn = deploymentProgress.querySelector(".download-html-btn")
+        downloadBtn.addEventListener("click", downloadUpdatedHTML)
+
+        // Auto-hide the notification after 5 seconds
         setTimeout(() => {
-          checkIfChangesDeployed()
-            .then((deployed) => {
-              if (deployed) {
-                showNotification("Changes saved and deployed successfully!")
-              } else {
-                showNotification(
-                  "Changes saved but may take a moment to deploy. Use the refresh button to check.",
-                  "info",
-                )
-              }
+          notification.classList.remove("show")
+        }, 5000)
+      }
+    }, updateInterval)
 
-              // Add a download button to the notification
-              const notification = document.getElementById("notification")
-              const downloadButton = document.createElement("button")
-              downloadButton.textContent = "Download Updated HTML"
-              downloadButton.className = "refresh-button"
-              downloadButton.addEventListener("click", downloadUpdatedHTML)
-              notification.appendChild(downloadButton)
-            })
-            .catch(() => {
-              // If we can't check, just show a generic message
-              showNotification("Changes saved. Refresh the website to see your changes.")
-
-              // Add a download button to the notification
-              const notification = document.getElementById("notification")
-              const downloadButton = document.createElement("button")
-              downloadButton.textContent = "Download Updated HTML"
-              downloadButton.className = "refresh-button"
-              downloadButton.addEventListener("click", downloadUpdatedHTML)
-              notification.appendChild(downloadButton)
-            })
-            .finally(() => {
-              saveAllBtn.textContent = "Save All Changes"
-              saveAllBtn.disabled = false
-            })
-        }, 2000)
-      })
-      .catch(() => {
-        saveAllBtn.textContent = "Save All Changes"
-        saveAllBtn.disabled = false
-      })
-  })
-
-  previewBtn.addEventListener("click", () => {
-    // Open the main site in a new tab with cache-busting parameter
-    const timestamp = new Date().getTime()
-    window.open(`/?t=${timestamp}`, "_blank")
-  })
-
-  // Initialize
-  if (accessToken && userData.login) {
-    showAdminDashboard()
-  } else {
-    handleAuthCallback()
+    // Check if changes are deployed
+    const checkDeploymentInterval = setInterval(() => {
+      checkIfChangesDeployed()
+        .then((deployed) => {
+          if (deployed) {
+            clearInterval(checkDeploymentInterval)
+            // We'll let the progress animation continue for visual consistency
+          }
+        })
+        .catch((error) => {
+          console.error("Error checking deployment:", error)
+        })
+    }, 5000) // Check every 5 seconds
   }
 
-  // Add this function to check if changes have been deployed
+  // Check if changes have been deployed
   function checkIfChangesDeployed() {
     return new Promise((resolve, reject) => {
       // Get the current content of the index.html file
@@ -1396,19 +1477,10 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
-  // Update the preview button click handler
-  previewBtn.addEventListener("click", () => {
-    // Open the main site in a new tab with cache-busting parameter
-    const timestamp = new Date().getTime()
-    window.open(`/?t=${timestamp}`, "_blank")
-  })
-
   // Add this function to download the updated HTML file
   function downloadUpdatedHTML() {
-    const updatedContent = applyChangesToHTML()
-
     // Create a blob with the updated content
-    const blob = new Blob([updatedContent], { type: "text/html" })
+    const blob = new Blob([websiteContent], { type: "text/html" })
 
     // Create a download link
     const downloadLink = document.createElement("a")
@@ -1422,6 +1494,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Show notification
     showNotification("Updated HTML file downloaded. Replace your local file with this one.")
+  }
+
+  // Event Listeners
+  githubLoginBtn.addEventListener("click", () => {
+    // Get the registered callback URL from GitHub OAuth app settings
+    // IMPORTANT: This must EXACTLY match what's in your GitHub OAuth app settings
+    const registeredRedirectUri = "http://127.0.0.1:5501/auth-callback.html"
+
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=Ov23liO4HGDGaOohco1M&redirect_uri=${encodeURIComponent(registeredRedirectUri)}&scope=repo`
+  })
+
+  logoutBtn.addEventListener("click", logout)
+
+  // Update the save section button to only save without deploying
+  saveSectionBtn.addEventListener("click", saveSection)
+
+  // Update the deploy button to deploy all saved changes
+  deployBtn.addEventListener("click", deployChanges)
+
+  previewBtn.addEventListener("click", () => {
+    // Open the main site in a new tab with cache-busting parameter
+    const timestamp = new Date().getTime()
+    window.open(`/?t=${timestamp}`, "_blank")
+  })
+
+  // Initialize
+  if (accessToken && userData.login) {
+    showAdminDashboard()
+  } else {
+    handleAuthCallback()
   }
 })
 
