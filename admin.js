@@ -1315,6 +1315,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Deploy all saved changes to GitHub
+  // Replace the deployChanges function with this version that won't clear the notification
   function deployChanges() {
     if (!hasSavedChanges) {
       showNotification("No saved changes to deploy", "info")
@@ -1327,11 +1328,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return
     }
 
-    // Show loading notification
-    showNotification("Deploying changes...", "info")
-    console.log("Starting deployment. Content length:", websiteContent.length)
-
-    // Start the deployment progress tracking first
+    // Start the deployment progress tracking first - this creates the progress bar
     startDeploymentProgress()
 
     // First, get the current file to get its SHA
@@ -1408,19 +1405,24 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .catch((error) => {
         console.error("Error deploying changes:", error)
-        showNotification(`Failed to deploy changes: ${error.message}`, "error")
+        // Don't show a new notification, just update the progress bar text
+        const progressText = document.querySelector(".progress-text")
+        if (progressText) {
+          progressText.textContent = `Error: ${error.message}. Deployment failed.`
+        }
         window.deploymentFailed = true
       })
   }
 
   // Replace the startDeploymentProgress function with this improved version
+  // Replace the startDeploymentProgress function with this fixed version
   function startDeploymentProgress() {
     // Reset deployment status flags
     window.deploymentSuccessful = false
     window.deploymentFailed = false
 
-    const deploymentDuration = 30000 // 30 seconds total (reduced from 60s)
-    const updateInterval = 500 // Update every half second (faster updates)
+    const deploymentDuration = 30000 // 30 seconds total
+    const updateInterval = 200 // Update every 200ms for smoother animation
     const steps = deploymentDuration / updateInterval
     let currentStep = 0
 
@@ -1428,17 +1430,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const deploymentProgress = document.createElement("div")
     deploymentProgress.className = "deployment-progress"
     deploymentProgress.innerHTML = `
-      <h3>Deployment in Progress</h3>
-      <p>Your changes are being published. This typically takes about 30 seconds.</p>
-      <div class="progress-container">
-        <div class="progress-bar" style="width: 0%"></div>
-      </div>
-      <p class="progress-text">0% - Starting deployment...</p>
-    `
+    <h3>Deployment in Progress</h3>
+    <p>Your changes are being published. This typically takes about 30 seconds.</p>
+    <div class="progress-container">
+      <div class="progress-bar" style="width: 0%"></div>
+    </div>
+    <p class="progress-text">0% - Starting deployment...</p>
+  `
 
-    // Add to the notification area
+    // Clear notification content and add the progress bar
     notification.innerHTML = ""
     notification.appendChild(deploymentProgress)
+    notification.classList.add("show") // Make sure notification is visible
 
     const progressBar = deploymentProgress.querySelector(".progress-bar")
     const progressText = deploymentProgress.querySelector(".progress-text")
@@ -1447,24 +1450,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const progressInterval = setInterval(() => {
       currentStep++
 
-      // Calculate progress percentage with a non-linear curve to make it more realistic
-      // This ensures it moves quickly at first, then slows down as it approaches 100%
+      // Calculate progress percentage with a non-linear curve
       let progressPercent
 
       if (window.deploymentSuccessful) {
-        // If deployment is successful, quickly move to 100%
-        progressPercent = Math.min(100, currentStep * 5)
+        // If deployment is successful, move to 100%
+        progressPercent = Math.min(100, currentStep * (100 / steps) + 10)
       } else if (window.deploymentFailed) {
         // If deployment failed, stop at current percentage
         clearInterval(progressInterval)
         progressText.textContent = `${Math.round(progressPercent)}% - Deployment failed. Please try again.`
         return
       } else {
-        // Normal progression curve
+        // Normal progression curve - ensure it doesn't get stuck at 2%
+        // This formula ensures it moves steadily but slows down as it approaches 95%
         const ratio = currentStep / steps
-        progressPercent = Math.min(98 * ratio, 98) // Cap at 98% until confirmed success
+        progressPercent = Math.min(95, 10 + 85 * ratio) // Start at 10%, go up to 95%
       }
 
+      // Update the progress bar width
       progressBar.style.width = `${progressPercent}%`
 
       // Update progress text
@@ -1481,11 +1485,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       // When progress is complete or we've reached the end of the animation
-      if (progressPercent >= 100 || currentStep >= steps * 1.5) {
+      if (progressPercent >= 100 || (currentStep >= steps * 1.2 && window.deploymentSuccessful)) {
         clearInterval(progressInterval)
 
         // Show completion message
-        deploymentProgress.innerHTML = `
+        setTimeout(() => {
+          deploymentProgress.innerHTML = `
           <h3>Deployment Complete!</h3>
           <p>Your changes are now live.</p>
           <div class="deployment-actions">
@@ -1494,15 +1499,16 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         `
 
-        // Add event listeners to buttons
-        const viewSiteBtn = deploymentProgress.querySelector(".view-site-btn")
-        viewSiteBtn.addEventListener("click", () => {
-          const timestamp = new Date().getTime()
-          window.open(`https://${config.owner}.github.io/${config.repo}/?t=${timestamp}`, "_blank")
-        })
+          // Add event listeners to buttons
+          const viewSiteBtn = deploymentProgress.querySelector(".view-site-btn")
+          viewSiteBtn.addEventListener("click", () => {
+            const timestamp = new Date().getTime()
+            window.open(`https://${config.owner}.github.io/${config.repo}/?t=${timestamp}`, "_blank")
+          })
 
-        const downloadBtn = deploymentProgress.querySelector(".download-html-btn")
-        downloadBtn.addEventListener("click", downloadUpdatedHTML)
+          const downloadBtn = deploymentProgress.querySelector(".download-html-btn")
+          downloadBtn.addEventListener("click", downloadUpdatedHTML)
+        }, 1000) // Wait 1 second before showing completion
       }
     }, updateInterval)
 
@@ -1525,7 +1531,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Show notification
+  // Replace the showNotification function to prevent it from clearing the progress bar
   function showNotification(message, type = "success") {
+    // Don't clear the notification if it contains a deployment progress bar
+    if (notification.querySelector(".deployment-progress")) {
+      console.log("Progress bar active, not clearing notification")
+      return
+    }
+
     // Clear any existing content
     notificationMessage.textContent = message
     notification.className = "notification"
@@ -1534,12 +1547,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const existingButton = notification.querySelector(".refresh-button")
     if (existingButton) {
       existingButton.remove()
-    }
-
-    // Remove any existing deployment progress
-    const existingProgress = notification.querySelector(".deployment-progress")
-    if (existingProgress) {
-      existingProgress.remove()
     }
 
     if (type === "error") {
