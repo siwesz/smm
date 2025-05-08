@@ -1321,8 +1321,207 @@ document.addEventListener("DOMContentLoaded", () => {
       return
     }
 
-    // Use the simple direct deployment method
-    simpleDeployToGitHub()
+    // Validate that we have content to deploy
+    if (!websiteContent || websiteContent.length < 1000) {
+      showNotification("Invalid website content. Please try saving your changes again.", "error")
+      return
+    }
+
+    // Show loading notification
+    showNotification("Deploying changes...", "info")
+    console.log("Starting deployment. Content length:", websiteContent.length)
+
+    // Start the deployment progress tracking first
+    startDeploymentProgress()
+
+    // First, get the current file to get its SHA
+    fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`, {
+      headers: {
+        Authorization: `token ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          console.error("Failed to fetch file info:", response.status, response.statusText)
+          throw new Error(`Failed to fetch file info: ${response.status} ${response.statusText}`)
+        }
+        return response.json()
+      })
+      .then((data) => {
+        console.log("Got file SHA:", data.sha)
+
+        // Prepare the content for GitHub
+        let encodedContent
+        try {
+          // Use TextEncoder for proper UTF-8 encoding
+          const contentBytes = new TextEncoder().encode(websiteContent)
+          encodedContent = btoa(String.fromCharCode(...new Uint8Array(contentBytes)))
+        } catch (error) {
+          console.error("Error encoding content:", error)
+          throw new Error(`Error encoding content: ${error.message}`)
+        }
+
+        console.log("Content encoded successfully. Length:", encodedContent.length)
+
+        // Now update the file with the new content
+        return fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `token ${accessToken}`,
+            "Content-Type": "application/json",
+            Accept: "application/vnd.github.v3+json",
+          },
+          body: JSON.stringify({
+            message: "Update website content via admin panel",
+            content: encodedContent,
+            sha: data.sha,
+            branch: config.mainBranch,
+          }),
+        })
+      })
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            console.error("Failed to save changes:", response.status, response.statusText, text)
+            throw new Error(`Failed to save changes: ${response.status} ${response.statusText}`)
+          })
+        }
+        return response.json()
+      })
+      .then((data) => {
+        console.log("GitHub update successful:", data)
+        originalContent = websiteContent
+
+        // Reset saved changes flag
+        hasSavedChanges = false
+
+        // Remove the "Changes ready" indicator from the deploy button
+        const statusIndicator = deployBtn.querySelector(".changes-status")
+        if (statusIndicator) {
+          statusIndicator.remove()
+        }
+
+        // The progress bar is already running, so we don't need to start it again
+        // Just mark the deployment as successful
+        window.deploymentSuccessful = true
+      })
+      .catch((error) => {
+        console.error("Error deploying changes:", error)
+        showNotification(`Failed to deploy changes: ${error.message}`, "error")
+        window.deploymentFailed = true
+      })
+  }
+
+  // Replace the startDeploymentProgress function with this improved version
+  function startDeploymentProgress() {
+    // Reset deployment status flags
+    window.deploymentSuccessful = false
+    window.deploymentFailed = false
+
+    const deploymentDuration = 30000 // 30 seconds total (reduced from 60s)
+    const updateInterval = 500 // Update every half second (faster updates)
+    const steps = deploymentDuration / updateInterval
+    let currentStep = 0
+
+    // Create deployment progress element
+    const deploymentProgress = document.createElement("div")
+    deploymentProgress.className = "deployment-progress"
+    deploymentProgress.innerHTML = `
+      <h3>Deployment in Progress</h3>
+      <p>Your changes are being published. This typically takes about 30 seconds.</p>
+      <div class="progress-container">
+        <div class="progress-bar" style="width: 0%"></div>
+      </div>
+      <p class="progress-text">0% - Starting deployment...</p>
+    `
+
+    // Add to the notification area
+    notification.innerHTML = ""
+    notification.appendChild(deploymentProgress)
+
+    const progressBar = deploymentProgress.querySelector(".progress-bar")
+    const progressText = deploymentProgress.querySelector(".progress-text")
+
+    // Start progress animation
+    const progressInterval = setInterval(() => {
+      currentStep++
+
+      // Calculate progress percentage with a non-linear curve to make it more realistic
+      // This ensures it moves quickly at first, then slows down as it approaches 100%
+      let progressPercent
+
+      if (window.deploymentSuccessful) {
+        // If deployment is successful, quickly move to 100%
+        progressPercent = Math.min(100, currentStep * 5)
+      } else if (window.deploymentFailed) {
+        // If deployment failed, stop at current percentage
+        clearInterval(progressInterval)
+        progressText.textContent = `${Math.round(progressPercent)}% - Deployment failed. Please try again.`
+        return
+      } else {
+        // Normal progression curve
+        const ratio = currentStep / steps
+        progressPercent = Math.min(98 * ratio, 98) // Cap at 98% until confirmed success
+      }
+
+      progressBar.style.width = `${progressPercent}%`
+
+      // Update progress text
+      if (progressPercent < 25) {
+        progressText.textContent = `${Math.round(progressPercent)}% - Preparing your changes...`
+      } else if (progressPercent < 50) {
+        progressText.textContent = `${Math.round(progressPercent)}% - Building your website...`
+      } else if (progressPercent < 75) {
+        progressText.textContent = `${Math.round(progressPercent)}% - Almost there...`
+      } else if (progressPercent < 100) {
+        progressText.textContent = `${Math.round(progressPercent)}% - Finalizing deployment...`
+      } else {
+        progressText.textContent = `100% - Deployment complete!`
+      }
+
+      // When progress is complete or we've reached the end of the animation
+      if (progressPercent >= 100 || currentStep >= steps * 1.5) {
+        clearInterval(progressInterval)
+
+        // Show completion message
+        deploymentProgress.innerHTML = `
+          <h3>Deployment Complete!</h3>
+          <p>Your changes are now live.</p>
+          <div class="deployment-actions">
+            <button class="view-site-btn">View Your Site</button>
+            <button class="download-html-btn">Download HTML</button>
+          </div>
+        `
+
+        // Add event listeners to buttons
+        const viewSiteBtn = deploymentProgress.querySelector(".view-site-btn")
+        viewSiteBtn.addEventListener("click", () => {
+          const timestamp = new Date().getTime()
+          window.open(`https://${config.owner}.github.io/${config.repo}/?t=${timestamp}`, "_blank")
+        })
+
+        const downloadBtn = deploymentProgress.querySelector(".download-html-btn")
+        downloadBtn.addEventListener("click", downloadUpdatedHTML)
+      }
+    }, updateInterval)
+
+    // Check if changes are deployed
+    const checkDeploymentInterval = setInterval(() => {
+      if (window.deploymentSuccessful || window.deploymentFailed) {
+        clearInterval(checkDeploymentInterval)
+      } else {
+        checkIfChangesDeployed()
+          .then((deployed) => {
+            if (deployed) {
+              window.deploymentSuccessful = true
+            }
+          })
+          .catch((error) => {
+            console.error("Error checking deployment:", error)
+          })
+      }
+    }, 3000) // Check every 3 seconds
   }
 
   // Show notification
