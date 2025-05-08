@@ -436,7 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
         id: `link-${index}`,
         href: el.getAttribute("href"),
         text: el.textContent.trim(),
-        path: this.getElementPath(el),
+        path: getElementPath(el),
       })
     })
 
@@ -1049,174 +1049,211 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Update applyChangesToHTML to include cache busting
   function applyChangesToHTML() {
-    // Create a temporary DOM parser
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(websiteContent, "text/html")
+    try {
+      console.log("Applying changes to HTML. Current content length:", websiteContent.length)
 
-    // Apply changes for each section
-    Object.keys(editableContent).forEach((sectionId) => {
-      const section = contentSections.find((s) => s.id === sectionId)
-      if (!section) return
+      // Create a temporary DOM parser
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(websiteContent, "text/html")
 
-      const sectionElement = doc.querySelector(section.selector)
-      if (!sectionElement) return
+      if (!doc.querySelector("html")) {
+        throw new Error("Failed to parse HTML content")
+      }
 
-      const sectionContent = editableContent[sectionId]
+      // Apply changes for each section
+      Object.keys(editableContent).forEach((sectionId) => {
+        const section = contentSections.find((s) => s.id === sectionId)
+        if (!section) {
+          console.warn(`Section not found for ID: ${sectionId}`)
+          return
+        }
 
-      // Update text content
-      if (sectionContent.texts) {
-        // First, group texts by their original element to handle logo parts together
-        const textsByOriginalElement = {}
+        const sectionElement = doc.querySelector(section.selector)
+        if (!sectionElement) {
+          console.warn(`Section element not found for selector: ${section.selector}`)
+          return
+        }
 
-        sectionContent.texts.forEach((text) => {
-          if (text.part && text.originalElement) {
-            if (!textsByOriginalElement[text.originalElement]) {
-              textsByOriginalElement[text.originalElement] = []
+        const sectionContent = editableContent[sectionId]
+        console.log(`Updating section ${sectionId} with:`, sectionContent)
+
+        // Update text content
+        if (sectionContent.texts && sectionContent.texts.length > 0) {
+          // First, group texts by their original element to handle logo parts together
+          const textsByOriginalElement = {}
+
+          sectionContent.texts.forEach((text) => {
+            if (text.part && text.originalElement) {
+              if (!textsByOriginalElement[text.originalElement]) {
+                textsByOriginalElement[text.originalElement] = []
+              }
+              textsByOriginalElement[text.originalElement].push(text)
             }
-            textsByOriginalElement[text.originalElement].push(text)
-          }
-        })
+          })
 
-        // Handle special cases like logo text with parts
-        Object.keys(textsByOriginalElement).forEach((originalElement) => {
-          const parts = textsByOriginalElement[originalElement]
-          if (parts.length > 0) {
-            // Find the main element
-            const mainPart = parts.find((p) => p.part === "main")
-            const spanPart = parts.find((p) => p.part === "span")
+          // Handle special cases like logo text with parts
+          Object.keys(textsByOriginalElement).forEach((originalElement) => {
+            const parts = textsByOriginalElement[originalElement]
+            if (parts.length > 0) {
+              // Find the main element
+              const mainPart = parts.find((p) => p.part === "main")
+              const spanPart = parts.find((p) => p.part === "span")
 
-            if (mainPart && spanPart) {
-              // Find the element in the DOM
-              const element = sectionElement.querySelector(mainPart.path.split(" ")[0])
+              if (mainPart && spanPart) {
+                // Find the element in the DOM
+                const element = sectionElement.querySelector(mainPart.path.split(" ")[0])
+                if (element) {
+                  console.log(`Updating logo text: ${mainPart.content} / ${spanPart.content}`)
+
+                  // Update the main text and span text
+                  const mainText = mainPart.content
+                  const spanText = spanPart.content
+
+                  // Find all text nodes and span elements
+                  const childNodes = Array.from(element.childNodes)
+                  childNodes.forEach((node) => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                      node.textContent = mainText
+                    } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "SPAN") {
+                      node.textContent = spanText
+                    }
+                  })
+                } else {
+                  console.warn(`Logo element not found for path: ${mainPart.path}`)
+                }
+              }
+            }
+          })
+
+          // Handle regular text elements
+          sectionContent.texts.forEach((text) => {
+            try {
+              // Skip new elements and parts of composite elements
+              if (text.isNew || text.part) return
+
+              // Find the element using the exact path
+              const element = sectionElement.querySelector(text.path)
               if (element) {
-                // Update the main text and span text
-                const mainText = mainPart.content
-                const spanText = spanPart.content
+                console.log(`Updating text element ${text.id}: ${text.content.substring(0, 30)}...`)
 
-                // Find all text nodes and span elements
-                const childNodes = Array.from(element.childNodes)
-                childNodes.forEach((node) => {
-                  if (node.nodeType === Node.TEXT_NODE) {
-                    node.textContent = mainText
-                  } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "SPAN") {
-                    node.textContent = spanText
+                // For elements that should be excluded from editing
+                if (
+                  element.closest("form") ||
+                  element.closest(".contact-form") ||
+                  element.closest(".hero-image") ||
+                  element.closest(".polaroid") ||
+                  element.closest(".phone-mockup") ||
+                  element.closest(".portfolio-item") ||
+                  element.closest(".service-icon") ||
+                  element.closest(".portfolio-overlay") ||
+                  element.closest(".social-icon") ||
+                  element.closest(".hero-sticker")
+                ) {
+                  console.warn(`Skipping protected element: ${text.path}`)
+                  return
+                }
+
+                // For elements with only text content, simply update the text
+                if (!element.querySelector("img, form, input, button, textarea")) {
+                  element.textContent = text.content
+                } else {
+                  // For elements with child elements, only update text nodes
+                  let hasUpdatedTextNode = false
+                  element.childNodes.forEach((node) => {
+                    if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                      node.textContent = text.content
+                      hasUpdatedTextNode = true
+                    }
+                  })
+
+                  if (!hasUpdatedTextNode) {
+                    console.warn(`Could not find text node to update in element: ${text.path}`)
                   }
-                })
-              }
-            }
-          }
-        })
-
-        // Handle regular text elements
-        sectionContent.texts.forEach((text) => {
-          try {
-            // Skip new elements and parts of composite elements
-            if (text.isNew || text.part) return
-
-            // Find the element using the exact path
-            const element = sectionElement.querySelector(text.path)
-            if (element) {
-              // For elements that should be excluded from editing
-              if (
-                element.closest("form") ||
-                element.closest(".contact-form") ||
-                element.closest(".hero-image") ||
-                element.closest(".polaroid") ||
-                element.closest(".phone-mockup") ||
-                element.closest(".portfolio-item") ||
-                element.closest(".service-icon") ||
-                element.closest(".portfolio-overlay") ||
-                element.closest(".social-icon") ||
-                element.closest(".hero-sticker")
-              ) {
-                console.warn(`Skipping protected element: ${text.path}`)
-                return
-              }
-
-              // For elements with only text content, simply update the text
-              if (!element.querySelector("img, form, input, button, textarea")) {
-                element.textContent = text.content
+                }
               } else {
-                // For elements with child elements, only update text nodes
-                let hasUpdatedTextNode = false
-                element.childNodes.forEach((node) => {
-                  if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
-                    node.textContent = text.content
-                    hasUpdatedTextNode = true
-                  }
-                })
+                console.warn(`Element not found for path: ${text.path}`)
               }
-            } else {
-              console.warn(`Element not found for path: ${text.path}`)
+            } catch (error) {
+              console.error(`Error updating text ${text.id}:`, error)
             }
-          } catch (error) {
-            console.error(`Error updating text ${text.id}:`, error)
-          }
-        })
-      }
+          })
+        }
 
-      // Update images
-      if (sectionContent.images) {
-        sectionContent.images.forEach((image) => {
-          try {
-            // Skip new elements, they'll be handled separately
-            if (image.isNew) return
+        // Update images
+        if (sectionContent.images && sectionContent.images.length > 0) {
+          sectionContent.images.forEach((image) => {
+            try {
+              // Skip new elements, they'll be handled separately
+              if (image.isNew) return
 
-            const element = sectionElement.querySelector(image.path)
-            if (element && element.tagName === "IMG") {
-              element.setAttribute("src", image.src)
-              element.setAttribute("alt", image.alt)
-            } else {
-              console.warn(`Image element not found for path: ${image.path}`)
-            }
-          } catch (error) {
-            console.error(`Error updating image ${image.id}:`, error)
-          }
-        })
-      }
-
-      // Update links
-      if (sectionContent.links) {
-        sectionContent.links.forEach((link) => {
-          try {
-            // Skip new elements, they'll be handled separately
-            if (link.isNew) return
-
-            const element = sectionElement.querySelector(link.path)
-            if (element && element.tagName === "A") {
-              element.setAttribute("href", link.href)
-
-              // Only update text if the link doesn't contain important elements
-              if (!element.querySelector("img, button, input")) {
-                element.textContent = link.text
+              const element = sectionElement.querySelector(image.path)
+              if (element && element.tagName === "IMG") {
+                console.log(`Updating image ${image.id}: ${image.src}`)
+                element.setAttribute("src", image.src)
+                element.setAttribute("alt", image.alt)
+              } else {
+                console.warn(`Image element not found for path: ${image.path}`)
               }
-            } else {
-              console.warn(`Link element not found for path: ${link.path}`)
+            } catch (error) {
+              console.error(`Error updating image ${image.id}:`, error)
             }
-          } catch (error) {
-            console.error(`Error updating link ${link.id}:`, error)
-          }
-        })
+          })
+        }
+
+        // Update links
+        if (sectionContent.links && sectionContent.links.length > 0) {
+          sectionContent.links.forEach((link) => {
+            try {
+              // Skip new elements, they'll be handled separately
+              if (link.isNew) return
+
+              const element = sectionElement.querySelector(link.path)
+              if (element && element.tagName === "A") {
+                console.log(`Updating link ${link.id}: ${link.href}`)
+                element.setAttribute("href", link.href)
+
+                // Only update text if the link doesn't contain important elements
+                if (!element.querySelector("img, button, input")) {
+                  element.textContent = link.text
+                }
+              } else {
+                console.warn(`Link element not found for path: ${link.path}`)
+              }
+            } catch (error) {
+              console.error(`Error updating link ${link.id}:`, error)
+            }
+          })
+        }
+      })
+
+      // Handle adding new elements
+      if (typeof applyNewElementsToHTML === "function") {
+        try {
+          applyNewElementsToHTML(doc)
+        } catch (error) {
+          console.error("Error applying new elements to HTML:", error)
+        }
+      } else {
+        console.warn("applyNewElementsToHTML function not found. New elements will not be added.")
       }
-    })
 
-    // Handle adding new elements
-    if (typeof applyNewElementsToHTML === "function") {
-      applyNewElementsToHTML(doc)
-    } else {
-      console.warn("applyNewElementsToHTML function not found. New elements will not be added.")
+      // Add a timestamp comment to force cache invalidation
+      const timestamp = new Date().toISOString()
+      const timestampComment = doc.createComment(`Last updated: ${timestamp}`)
+      const body = doc.querySelector("body")
+      if (body) {
+        body.appendChild(timestampComment)
+      }
+
+      // Convert back to string, preserving DOCTYPE and original structure
+      const updatedHtml = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML
+      console.log("HTML updated successfully. New content length:", updatedHtml.length)
+
+      return updatedHtml
+    } catch (error) {
+      console.error("Error applying changes to HTML:", error)
+      throw error
     }
-
-    // Add a timestamp comment to force cache invalidation
-    const timestamp = new Date().toISOString()
-    const timestampComment = doc.createComment(`Last updated: ${timestamp}`)
-    const body = doc.querySelector("body")
-    if (body) {
-      body.appendChild(timestampComment)
-    }
-
-    // Convert back to string, preserving DOCTYPE and original structure
-    return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML
   }
 
   // Save section changes without deploying
@@ -1226,21 +1263,36 @@ document.addEventListener("DOMContentLoaded", () => {
       return
     }
 
-    // Apply changes to the HTML content
-    websiteContent = applyChangesToHTML()
+    try {
+      // Apply changes to the HTML content
+      const updatedContent = applyChangesToHTML()
 
-    // Reset unsaved changes flag
-    hasUnsavedChanges = false
+      // Make sure we got valid HTML back
+      if (!updatedContent || !updatedContent.includes("<!DOCTYPE html>")) {
+        throw new Error("Failed to generate valid HTML content")
+      }
 
-    // Mark that we have saved changes that need to be deployed
-    markSavedChanges()
+      // Update the websiteContent with the new HTML
+      websiteContent = updatedContent
 
-    // Remove unsaved indicators from sections
-    document.querySelectorAll(".section-list li.has-unsaved-changes").forEach((item) => {
-      item.classList.remove("has-unsaved-changes")
-    })
+      console.log("Section saved successfully. Content length:", websiteContent.length)
 
-    showNotification("Section saved. Click 'Deploy' when you're ready to publish all changes.", "success")
+      // Reset unsaved changes flag
+      hasUnsavedChanges = false
+
+      // Mark that we have saved changes that need to be deployed
+      markSavedChanges()
+
+      // Remove unsaved indicators from sections
+      document.querySelectorAll(".section-list li.has-unsaved-changes").forEach((item) => {
+        item.classList.remove("has-unsaved-changes")
+      })
+
+      showNotification("Section saved. Click 'Deploy' when you're ready to publish all changes.", "success")
+    } catch (error) {
+      console.error("Error saving section:", error)
+      showNotification(`Error saving section: ${error.message}`, "error")
+    }
   }
 
   // Deploy all saved changes to GitHub
@@ -1250,32 +1302,58 @@ document.addEventListener("DOMContentLoaded", () => {
       return
     }
 
+    // Validate that we have content to deploy
+    if (!websiteContent || websiteContent.length < 1000) {
+      showNotification("Invalid website content. Please try saving your changes again.", "error")
+      return
+    }
+
     // Show loading notification
     showNotification("Deploying changes...", "info")
+    console.log("Starting deployment. Content length:", websiteContent.length)
 
     // First, get the current file to get its SHA
     fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`, {
       headers: {
         Authorization: `token ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
       },
     })
       .then((response) => {
         if (!response.ok) {
+          console.error("Failed to fetch file info:", response.status, response.statusText)
           throw new Error(`Failed to fetch file info: ${response.status} ${response.statusText}`)
         }
         return response.json()
       })
       .then((data) => {
+        console.log("Got file SHA:", data.sha)
+
+        // Prepare the content for GitHub
+        let encodedContent
+        try {
+          // First, ensure we're working with a UTF-8 string
+          const utf8Content = unescape(encodeURIComponent(websiteContent))
+          // Then encode to base64
+          encodedContent = btoa(utf8Content)
+        } catch (error) {
+          console.error("Error encoding content:", error)
+          throw new Error(`Error encoding content: ${error.message}`)
+        }
+
+        console.log("Content encoded successfully. Length:", encodedContent.length)
+
         // Now update the file with the new content
         return fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`, {
           method: "PUT",
           headers: {
             Authorization: `token ${accessToken}`,
             "Content-Type": "application/json",
+            Accept: "application/vnd.github.v3+json",
           },
           body: JSON.stringify({
             message: "Update website content via admin panel",
-            content: btoa(unescape(encodeURIComponent(websiteContent))),
+            content: encodedContent,
             sha: data.sha,
             branch: config.mainBranch,
           }),
@@ -1283,7 +1361,10 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .then((response) => {
         if (!response.ok) {
-          throw new Error(`Failed to save changes: ${response.status} ${response.statusText}`)
+          return response.text().then((text) => {
+            console.error("Failed to save changes:", response.status, response.statusText, text)
+            throw new Error(`Failed to save changes: ${response.status} ${response.statusText}`)
+          })
         }
         return response.json()
       })
@@ -1535,7 +1616,20 @@ document.addEventListener("DOMContentLoaded", () => {
     downloadBtn.id = "download-html-btn"
     downloadBtn.className = "btn-secondary"
     downloadBtn.textContent = "Download HTML"
-    downloadBtn.addEventListener("click", downloadUpdatedHTML)
+    // Use an anonymous function to call the function in the correct scope
+    downloadBtn.addEventListener("click", () => {
+      // Check if the function exists in the global scope
+      if (typeof window.downloadUpdatedHTML === "function") {
+        window.downloadUpdatedHTML()
+      } else {
+        // Otherwise, use the function from the current scope
+        downloadUpdatedHTML()
+      }
+    })
     sidebarActions.appendChild(downloadBtn)
   }
 })
+
+// Add a global reference to the downloadUpdatedHTML function
+// Add this after the downloadUpdatedHTML function definition:
+window.downloadUpdatedHTML = downloadUpdatedHTML
