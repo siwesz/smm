@@ -1005,80 +1005,24 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Apply changes to HTML content
-  // Replace the applyChangesToHTML function with this version that ensures it doesn't modify the original structure
-  // This function should only update the specific content that was changed in the admin panel
-
-  // Add this function to help with cache busting
-  function addCacheBustingMeta() {
-    // Create a temporary DOM parser
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(websiteContent, "text/html")
-
-    // Check if there's already a cache-control meta tag
-    let metaTag = doc.querySelector('meta[http-equiv="Cache-Control"]')
-
-    if (!metaTag) {
-      // Create a new meta tag for cache control
-      metaTag = doc.createElement("meta")
-      metaTag.setAttribute("http-equiv", "Cache-Control")
-      metaTag.setAttribute("content", "no-cache, no-store, must-revalidate")
-
-      // Add it to the head
-      const head = doc.querySelector("head")
-      if (head) {
-        head.appendChild(metaTag)
-      }
-
-      // Also add pragma and expires for older browsers
-      const pragmaMeta = doc.createElement("meta")
-      pragmaMeta.setAttribute("http-equiv", "Pragma")
-      pragmaMeta.setAttribute("content", "no-cache")
-      head.appendChild(pragmaMeta)
-
-      const expiresMeta = doc.createElement("meta")
-      expiresMeta.setAttribute("http-equiv", "Expires")
-      expiresMeta.setAttribute("content", "0")
-      head.appendChild(expiresMeta)
-
-      // Convert back to string
-      websiteContent = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML
-    }
-
-    return websiteContent
-  }
-
-  // Update applyChangesToHTML to include cache busting
   function applyChangesToHTML() {
     try {
-      console.log("Applying changes to HTML. Current content length:", websiteContent.length)
-
       // Create a temporary DOM parser
       const parser = new DOMParser()
       const doc = parser.parseFromString(websiteContent, "text/html")
 
-      if (!doc.querySelector("html")) {
-        throw new Error("Failed to parse HTML content")
-      }
-
       // Apply changes for each section
       Object.keys(editableContent).forEach((sectionId) => {
         const section = contentSections.find((s) => s.id === sectionId)
-        if (!section) {
-          console.warn(`Section not found for ID: ${sectionId}`)
-          return
-        }
+        if (!section) return
 
         const sectionElement = doc.querySelector(section.selector)
-        if (!sectionElement) {
-          console.warn(`Section element not found for selector: ${section.selector}`)
-          return
-        }
+        if (!sectionElement) return
 
         const sectionContent = editableContent[sectionId]
-        console.log(`Updating section ${sectionId} with:`, sectionContent)
 
         // Update text content
-        if (sectionContent.texts && sectionContent.texts.length > 0) {
+        if (sectionContent.texts) {
           // First, group texts by their original element to handle logo parts together
           const textsByOriginalElement = {}
 
@@ -1103,8 +1047,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Find the element in the DOM
                 const element = sectionElement.querySelector(mainPart.path.split(" ")[0])
                 if (element) {
-                  console.log(`Updating logo text: ${mainPart.content} / ${spanPart.content}`)
-
                   // Update the main text and span text
                   const mainText = mainPart.content
                   const spanText = spanPart.content
@@ -1118,8 +1060,6 @@ document.addEventListener("DOMContentLoaded", () => {
                       node.textContent = spanText
                     }
                   })
-                } else {
-                  console.warn(`Logo element not found for path: ${mainPart.path}`)
                 }
               }
             }
@@ -1134,8 +1074,6 @@ document.addEventListener("DOMContentLoaded", () => {
               // Find the element using the exact path
               const element = sectionElement.querySelector(text.path)
               if (element) {
-                console.log(`Updating text element ${text.id}: ${text.content.substring(0, 30)}...`)
-
                 // For elements that should be excluded from editing
                 if (
                   element.closest("form") ||
@@ -1165,10 +1103,6 @@ document.addEventListener("DOMContentLoaded", () => {
                       hasUpdatedTextNode = true
                     }
                   })
-
-                  if (!hasUpdatedTextNode) {
-                    console.warn(`Could not find text node to update in element: ${text.path}`)
-                  }
                 }
               } else {
                 console.warn(`Element not found for path: ${text.path}`)
@@ -1180,7 +1114,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Update images
-        if (sectionContent.images && sectionContent.images.length > 0) {
+        if (sectionContent.images) {
           sectionContent.images.forEach((image) => {
             try {
               // Skip new elements, they'll be handled separately
@@ -1188,7 +1122,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
               const element = sectionElement.querySelector(image.path)
               if (element && element.tagName === "IMG") {
-                console.log(`Updating image ${image.id}: ${image.src}`)
                 element.setAttribute("src", image.src)
                 element.setAttribute("alt", image.alt)
               } else {
@@ -1201,7 +1134,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Update links
-        if (sectionContent.links && sectionContent.links.length > 0) {
+        if (sectionContent.links) {
           sectionContent.links.forEach((link) => {
             try {
               // Skip new elements, they'll be handled separately
@@ -1209,7 +1142,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
               const element = sectionElement.querySelector(link.path)
               if (element && element.tagName === "A") {
-                console.log(`Updating link ${link.id}: ${link.href}`)
                 element.setAttribute("href", link.href)
 
                 // Only update text if the link doesn't contain important elements
@@ -1228,11 +1160,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Handle adding new elements
       if (typeof applyNewElementsToHTML === "function") {
-        try {
-          applyNewElementsToHTML(doc)
-        } catch (error) {
-          console.error("Error applying new elements to HTML:", error)
-        }
+        applyNewElementsToHTML(doc)
       } else {
         console.warn("applyNewElementsToHTML function not found. New elements will not be added.")
       }
@@ -1246,13 +1174,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       // Convert back to string, preserving DOCTYPE and original structure
-      const updatedHtml = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML
-      console.log("HTML updated successfully. New content length:", updatedHtml.length)
-
-      return updatedHtml
+      return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML
     } catch (error) {
       console.error("Error applying changes to HTML:", error)
-      throw error
+      showNotification(`Error applying changes: ${error.message}`, "error")
+      return null
     }
   }
 
@@ -1267,15 +1193,12 @@ document.addEventListener("DOMContentLoaded", () => {
       // Apply changes to the HTML content
       const updatedContent = applyChangesToHTML()
 
-      // Make sure we got valid HTML back
-      if (!updatedContent || !updatedContent.includes("<!DOCTYPE html>")) {
-        throw new Error("Failed to generate valid HTML content")
+      if (!updatedContent) {
+        throw new Error("Failed to generate updated HTML content")
       }
 
       // Update the websiteContent with the new HTML
       websiteContent = updatedContent
-
-      console.log("Section saved successfully. Content length:", websiteContent.length)
 
       // Reset unsaved changes flag
       hasUnsavedChanges = false
@@ -1295,6 +1218,102 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Simple function to directly deploy content to GitHub
+  async function simpleDeployToGitHub() {
+    try {
+      showNotification("Deploying changes...", "info")
+
+      // Get the current file info to get its SHA
+      const fileInfoResponse = await fetch(
+        `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`,
+        {
+          headers: {
+            Authorization: `token ${accessToken}`,
+            Accept: "application/vnd.github.v3+json",
+          },
+        },
+      )
+
+      if (!fileInfoResponse.ok) {
+        throw new Error(`Failed to get file info: ${fileInfoResponse.status} ${fileInfoResponse.statusText}`)
+      }
+
+      const fileInfo = await fileInfoResponse.json()
+      const fileSha = fileInfo.sha
+
+      // Encode content to base64
+      const contentBytes = new TextEncoder().encode(websiteContent)
+      const base64Content = btoa(String.fromCharCode(...new Uint8Array(contentBytes)))
+
+      // Update the file
+      const updateResponse = await fetch(
+        `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `token ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: "Update website content via admin panel",
+            content: base64Content,
+            sha: fileSha,
+            branch: config.mainBranch,
+          }),
+        },
+      )
+
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text()
+        throw new Error(`Failed to update file: ${updateResponse.status} ${updateResponse.statusText} - ${errorText}`)
+      }
+
+      // Success!
+      originalContent = websiteContent
+      hasSavedChanges = false
+
+      // Remove the "Changes ready" indicator from the deploy button
+      const statusIndicator = deployBtn.querySelector(".changes-status")
+      if (statusIndicator) {
+        statusIndicator.remove()
+      }
+
+      showNotification("Changes deployed successfully!", "success")
+
+      // Show success message with view site button
+      const successNotification = document.createElement("div")
+      successNotification.className = "deployment-success"
+      successNotification.innerHTML = `
+        <h3>Deployment Complete!</h3>
+        <p>Your changes are now live.</p>
+        <div class="deployment-actions">
+          <button class="view-site-btn">View Your Site</button>
+          <button class="download-html-btn">Download HTML</button>
+        </div>
+      `
+
+      // Replace notification content
+      notification.innerHTML = ""
+      notification.appendChild(successNotification)
+
+      // Add event listeners to buttons
+      const viewSiteBtn = successNotification.querySelector(".view-site-btn")
+      viewSiteBtn.addEventListener("click", () => {
+        const timestamp = new Date().getTime()
+        window.open(`https://${config.owner}.github.io/${config.repo}/?t=${timestamp}`, "_blank")
+      })
+
+      const downloadBtn = successNotification.querySelector(".download-html-btn")
+      downloadBtn.addEventListener("click", downloadUpdatedHTML)
+
+      return true
+    } catch (error) {
+      console.error("Deployment error:", error)
+      showNotification(`Deployment failed: ${error.message}`, "error")
+      return false
+    }
+  }
+
   // Deploy all saved changes to GitHub
   function deployChanges() {
     if (!hasSavedChanges) {
@@ -1302,94 +1321,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return
     }
 
-    // Validate that we have content to deploy
-    if (!websiteContent || websiteContent.length < 1000) {
-      showNotification("Invalid website content. Please try saving your changes again.", "error")
-      return
-    }
-
-    // Show loading notification
-    showNotification("Deploying changes...", "info")
-    console.log("Starting deployment. Content length:", websiteContent.length)
-
-    // First, get the current file to get its SHA
-    fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`, {
-      headers: {
-        Authorization: `token ${accessToken}`,
-        Accept: "application/vnd.github.v3+json",
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          console.error("Failed to fetch file info:", response.status, response.statusText)
-          throw new Error(`Failed to fetch file info: ${response.status} ${response.statusText}`)
-        }
-        return response.json()
-      })
-      .then((data) => {
-        console.log("Got file SHA:", data.sha)
-
-        // Prepare the content for GitHub
-        let encodedContent
-        try {
-          // First, ensure we're working with a UTF-8 string
-          const utf8Content = unescape(encodeURIComponent(websiteContent))
-          // Then encode to base64
-          encodedContent = btoa(utf8Content)
-        } catch (error) {
-          console.error("Error encoding content:", error)
-          throw new Error(`Error encoding content: ${error.message}`)
-        }
-
-        console.log("Content encoded successfully. Length:", encodedContent.length)
-
-        // Now update the file with the new content
-        return fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`, {
-          method: "PUT",
-          headers: {
-            Authorization: `token ${accessToken}`,
-            "Content-Type": "application/json",
-            Accept: "application/vnd.github.v3+json",
-          },
-          body: JSON.stringify({
-            message: "Update website content via admin panel",
-            content: encodedContent,
-            sha: data.sha,
-            branch: config.mainBranch,
-          }),
-        })
-      })
-      .then((response) => {
-        if (!response.ok) {
-          return response.text().then((text) => {
-            console.error("Failed to save changes:", response.status, response.statusText, text)
-            throw new Error(`Failed to save changes: ${response.status} ${response.statusText}`)
-          })
-        }
-        return response.json()
-      })
-      .then((data) => {
-        console.log("GitHub update successful:", data)
-        originalContent = websiteContent
-
-        // Reset saved changes flag
-        hasSavedChanges = false
-
-        // Remove the "Changes ready" indicator from the deploy button
-        const statusIndicator = deployBtn.querySelector(".changes-status")
-        if (statusIndicator) {
-          statusIndicator.remove()
-        }
-
-        showNotification("Changes deployed successfully! Tracking progress...")
-
-        // Start the deployment progress tracking
-        startDeploymentProgress()
-      })
-      .catch((error) => {
-        console.error("Error deploying changes:", error)
-        showNotification(`Failed to deploy changes: ${error.message}`, "error")
-      })
+    // Use the simple direct deployment method
+    simpleDeployToGitHub()
   }
 
   // Show notification
@@ -1436,94 +1369,6 @@ document.addEventListener("DOMContentLoaded", () => {
     userData = {}
     adminDashboard.classList.add("hidden")
     loginScreen.classList.remove("hidden")
-  }
-
-  // Start deployment progress tracking
-  function startDeploymentProgress() {
-    const deploymentDuration = 60000 // 60 seconds total
-    const updateInterval = 1000 // Update every second
-    const steps = deploymentDuration / updateInterval
-    let currentStep = 0
-
-    // Create deployment progress element
-    const deploymentProgress = document.createElement("div")
-    deploymentProgress.className = "deployment-progress"
-    deploymentProgress.innerHTML = `
-      <h3>Deployment in Progress</h3>
-      <p>Your changes are being published. This typically takes about a minute.</p>
-      <div class="progress-container">
-        <div class="progress-bar" style="width: 0%"></div>
-      </div>
-      <p class="progress-text">0% - Starting deployment...</p>
-    `
-
-    // Add to the notification area
-    notification.appendChild(deploymentProgress)
-
-    const progressBar = deploymentProgress.querySelector(".progress-bar")
-    const progressText = deploymentProgress.querySelector(".progress-text")
-
-    // Start progress animation
-    const progressInterval = setInterval(() => {
-      currentStep++
-      const progressPercent = Math.min((currentStep / steps) * 100, 100)
-      progressBar.style.width = `${progressPercent}%`
-
-      // Update progress text
-      if (progressPercent < 25) {
-        progressText.textContent = `${Math.round(progressPercent)}% - Preparing your changes...`
-      } else if (progressPercent < 50) {
-        progressText.textContent = `${Math.round(progressPercent)}% - Building your website...`
-      } else if (progressPercent < 75) {
-        progressText.textContent = `${Math.round(progressPercent)}% - Almost there...`
-      } else {
-        progressText.textContent = `${Math.round(progressPercent)}% - Finalizing deployment...`
-      }
-
-      // When progress is complete
-      if (currentStep >= steps) {
-        clearInterval(progressInterval)
-
-        // Show completion message
-        deploymentProgress.innerHTML = `
-          <h3>Deployment Complete!</h3>
-          <p>Your changes are now live.</p>
-          <div class="deployment-actions">
-            <button class="view-site-btn">View Your Site</button>
-            <button class="download-html-btn">Download HTML</button>
-          </div>
-        `
-
-        // Add event listeners to buttons
-        const viewSiteBtn = deploymentProgress.querySelector(".view-site-btn")
-        viewSiteBtn.addEventListener("click", () => {
-          const timestamp = new Date().getTime()
-          window.open(`https://${config.owner}.github.io/${config.repo}/?t=${timestamp}`, "_blank")
-        })
-
-        const downloadBtn = deploymentProgress.querySelector(".download-html-btn")
-        downloadBtn.addEventListener("click", downloadUpdatedHTML)
-
-        // Auto-hide the notification after 5 seconds
-        setTimeout(() => {
-          notification.classList.remove("show")
-        }, 5000)
-      }
-    }, updateInterval)
-
-    // Check if changes are deployed
-    const checkDeploymentInterval = setInterval(() => {
-      checkIfChangesDeployed()
-        .then((deployed) => {
-          if (deployed) {
-            clearInterval(checkDeploymentInterval)
-            // We'll let the progress animation continue for visual consistency
-          }
-        })
-        .catch((error) => {
-          console.error("Error checking deployment:", error)
-        })
-    }, 5000) // Check every 5 seconds
   }
 
   // Check if changes have been deployed
@@ -1608,6 +1453,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 })
 
+// Make downloadUpdatedHTML globally available
+window.downloadUpdatedHTML = () => {
+  // Create a blob with the updated content
+  const blob = new Blob([window.websiteContent || ""], { type: "text/html" })
+
+  // Create a download link
+  const downloadLink = document.createElement("a")
+  downloadLink.href = URL.createObjectURL(blob)
+  downloadLink.download = "index.html"
+
+  // Append to body, click, and remove
+  document.body.appendChild(downloadLink)
+  downloadLink.click()
+  document.body.removeChild(downloadLink)
+}
+
 // Add this after the sidebar-actions div is created in the HTML
 document.addEventListener("DOMContentLoaded", () => {
   const sidebarActions = document.querySelector(".sidebar-actions")
@@ -1616,20 +1477,7 @@ document.addEventListener("DOMContentLoaded", () => {
     downloadBtn.id = "download-html-btn"
     downloadBtn.className = "btn-secondary"
     downloadBtn.textContent = "Download HTML"
-    // Use an anonymous function to call the function in the correct scope
-    downloadBtn.addEventListener("click", () => {
-      // Check if the function exists in the global scope
-      if (typeof window.downloadUpdatedHTML === "function") {
-        window.downloadUpdatedHTML()
-      } else {
-        // Otherwise, use the function from the current scope
-        downloadUpdatedHTML()
-      }
-    })
+    downloadBtn.addEventListener("click", window.downloadUpdatedHTML)
     sidebarActions.appendChild(downloadBtn)
   }
 })
-
-// Add a global reference to the downloadUpdatedHTML function
-// Add this after the downloadUpdatedHTML function definition:
-window.downloadUpdatedHTML = downloadUpdatedHTML
