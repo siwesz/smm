@@ -57,6 +57,14 @@ document.addEventListener("DOMContentLoaded", () => {
   let addNewLink
   let applyNewElementsToHTML
 
+  // Global deployment status tracking
+  window.deploymentStatus = {
+    inProgress: false,
+    successful: false,
+    failed: false,
+    errorMessage: null,
+  }
+
   // Check if we're returning from GitHub OAuth
   function handleAuthCallback() {
     const urlParams = new URLSearchParams(window.location.search)
@@ -1218,242 +1226,144 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Simple function to directly deploy content to GitHub
-  async function simpleDeployToGitHub() {
-    try {
-      showNotification("Deploying changes...", "info")
+  // COMPLETELY NEW DEPLOYMENT PROGRESS BAR IMPLEMENTATION
+  // This implementation creates a standalone, fixed-position element that stays visible
+  // until explicitly closed by the user
+  function createDeploymentProgressBar() {
+    // Remove any existing progress bar first
+    const existingBar = document.getElementById("deployment-progress-container")
+    if (existingBar) {
+      existingBar.remove()
+    }
 
-      // Get the current file info to get its SHA
-      const fileInfoResponse = await fetch(
-        `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`,
-        {
-          headers: {
-            Authorization: `token ${accessToken}`,
-            Accept: "application/vnd.github.v3+json",
-          },
-        },
-      )
+    // Create container
+    const container = document.createElement("div")
+    container.id = "deployment-progress-container"
 
-      if (!fileInfoResponse.ok) {
-        throw new Error(`Failed to get file info: ${fileInfoResponse.status} ${fileInfoResponse.statusText}`)
-      }
+    // Apply styles directly to ensure they can't be overridden
+    Object.assign(container.style, {
+      position: "fixed",
+      zIndex: "10000",
+      bottom: "20px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      width: "80%",
+      maxWidth: "600px",
+      backgroundColor: "#ffffff",
+      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+      borderRadius: "8px",
+      padding: "20px",
+      fontFamily: "'Outfit', sans-serif",
+      border: "1px solid #FF3399",
+    })
 
-      const fileInfo = await fileInfoResponse.json()
-      const fileSha = fileInfo.sha
-
-      // Encode content to base64
-      const contentBytes = new TextEncoder().encode(websiteContent)
-      const base64Content = btoa(String.fromCharCode(...new Uint8Array(contentBytes)))
-
-      // Update the file
-      const updateResponse = await fetch(
-        `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `token ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: "Update website content via admin panel",
-            content: base64Content,
-            sha: fileSha,
-            branch: config.mainBranch,
-          }),
-        },
-      )
-
-      if (!updateResponse.ok) {
-        const errorText = await updateResponse.text()
-        throw new Error(`Failed to update file: ${updateResponse.status} ${updateResponse.statusText} - ${errorText}`)
-      }
-
-      // Success!
-      originalContent = websiteContent
-      hasSavedChanges = false
-
-      // Remove the "Changes ready" indicator from the deploy button
-      const statusIndicator = deployBtn.querySelector(".changes-status")
-      if (statusIndicator) {
-        statusIndicator.remove()
-      }
-
-      showNotification("Changes deployed successfully!", "success")
-
-      // Show success message with view site button
-      const successNotification = document.createElement("div")
-      successNotification.className = "deployment-success"
-      successNotification.innerHTML = `
-        <h3>Deployment Complete!</h3>
-        <p>Your changes are now live.</p>
-        <div class="deployment-actions">
-          <button class="view-site-btn">View Your Site</button>
-          <button class="download-html-btn">Download HTML</button>
+    // Create content
+    container.innerHTML = `
+      <div style="margin-bottom: 15px;">
+        <h3 style="margin: 0 0 10px 0; color: #333; font-weight: 600; font-size: 18px;">Deployment in Progress</h3>
+        <p style="margin: 0; color: #666; font-size: 14px;">Your changes are being published to GitHub Pages. This will take exactly 60 seconds.</p>
+      </div>
+      <div style="height: 12px; background-color: #f0f0f0; border-radius: 6px; overflow: hidden; margin: 15px 0;">
+        <div id="deployment-progress-bar" style="height: 100%; width: 0%; background-color: #FF3399; transition: width 0.5s ease;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <p id="deployment-progress-text" style="margin: 0; color: #666; font-size: 14px;">0% - Starting deployment...</p>
+        <div id="deployment-actions" style="display: none;">
+          <button id="view-site-btn" style="background-color: #FF3399; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px; font-size: 14px;">View Site</button>
+          <button id="close-progress-btn" style="background-color: #f0f0f0; color: #333; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 14px;">Close</button>
         </div>
-      `
+      </div>
+    `
 
-      // Replace notification content
-      notification.innerHTML = ""
-      notification.appendChild(successNotification)
+    // Add to body
+    document.body.appendChild(container)
 
-      // Add event listeners to buttons
-      const viewSiteBtn = successNotification.querySelector(".view-site-btn")
-      viewSiteBtn.addEventListener("click", () => {
-        const timestamp = new Date().getTime()
-        window.open(`https://${config.owner}.github.io/${config.repo}/?t=${timestamp}`, "_blank")
-      })
-
-      const downloadBtn = successNotification.querySelector(".download-html-btn")
-      downloadBtn.addEventListener("click", downloadUpdatedHTML)
-
-      return true
-    } catch (error) {
-      console.error("Deployment error:", error)
-      showNotification(`Deployment failed: ${error.message}`, "error")
-      return false
+    return {
+      container,
+      progressBar: document.getElementById("deployment-progress-bar"),
+      progressText: document.getElementById("deployment-progress-text"),
+      actions: document.getElementById("deployment-actions"),
+      viewSiteBtn: document.getElementById("view-site-btn"),
+      closeBtn: document.getElementById("close-progress-btn"),
     }
   }
 
-  // Deploy all saved changes to GitHub
-  // Replace the deployChanges function with this version that won't clear the notification
+  // Function to run the deployment progress animation
+  function runDeploymentProgress() {
+    // Create the progress bar UI
+    const ui = createDeploymentProgressBar()
 
-  // Replace the startDeploymentProgress function with this improved version
-  // Replace the startDeploymentProgress function with this fixed version
-  function startDeploymentProgress() {
-    // Reset deployment status flags
-    window.deploymentSuccessful = false
-    window.deploymentFailed = false
-
-    // Create a dedicated container for the progress bar that won't be removed
-    const progressContainer = document.createElement("div")
-    progressContainer.id = "fixed-progress-container"
-    progressContainer.style.position = "fixed"
-    progressContainer.style.bottom = "30px"
-    progressContainer.style.left = "50%"
-    progressContainer.style.transform = "translateX(-50%)"
-    progressContainer.style.width = "80%"
-    progressContainer.style.maxWidth = "500px"
-    progressContainer.style.backgroundColor = "white"
-    progressContainer.style.padding = "20px"
-    progressContainer.style.borderRadius = "8px"
-    progressContainer.style.boxShadow = "0 5px 20px rgba(0, 0, 0, 0.3)"
-    progressContainer.style.zIndex = "2000"
-
-    // Create the progress bar content
-    progressContainer.innerHTML = `
-      <h3 style="margin-top: 0; color: #333; font-family: var(--font-heading);">Deployment in Progress</h3>
-      <p style="color: #666; margin-bottom: 15px;">Your changes are being published. This will take 60 seconds.</p>
-      <div style="height: 10px; background-color: #f0f0f0; border-radius: 5px; overflow: hidden; margin: 15px 0;">
-        <div id="fixed-progress-bar" style="height: 100%; width: 0%; background: var(--hot-pink); border-radius: 5px; transition: width 0.5s ease;"></div>
-      </div>
-      <p id="fixed-progress-text" style="font-size: 0.85rem; color: #666;">0% - Starting deployment...</p>
-    `
-
-    // Add to body (not to the notification element)
-    document.body.appendChild(progressContainer)
-
-    const progressBar = document.getElementById("fixed-progress-bar")
-    const progressText = document.getElementById("fixed-progress-text")
-
-    // Set exact duration to 60 seconds
-    const TOTAL_DURATION = 60000 // 60 seconds in milliseconds
-    const UPDATE_INTERVAL = 500 // Update every half second
-    const TOTAL_STEPS = TOTAL_DURATION / UPDATE_INTERVAL
+    // Set up the progress animation
+    const TOTAL_DURATION = 60000 // Exactly 60 seconds
+    const UPDATE_INTERVAL = 250 // Update every 250ms for smooth animation
+    const STEPS = TOTAL_DURATION / UPDATE_INTERVAL
     let currentStep = 0
 
-    // Start progress animation
-    const progressInterval = setInterval(() => {
+    // Start the timer
+    const timer = setInterval(() => {
       currentStep++
 
-      // Calculate exact percentage based on time elapsed
-      const exactPercentage = (currentStep / TOTAL_STEPS) * 100
-      const displayPercentage = Math.min(99, Math.floor(exactPercentage))
+      // Calculate progress percentage
+      const percentage = Math.min(99, Math.floor((currentStep / STEPS) * 100))
 
-      // If deployment failed, show error but keep bar visible and continue counting
-      if (window.deploymentFailed) {
-        progressText.textContent = `${displayPercentage}% - Deployment error detected, but still waiting for GitHub to process changes...`
-        progressText.style.color = "#ff9800" // Warning color
+      // Update the progress bar
+      ui.progressBar.style.width = `${percentage}%`
+
+      // Update the text based on progress
+      if (percentage < 25) {
+        ui.progressText.textContent = `${percentage}% - Uploading changes to GitHub...`
+      } else if (percentage < 50) {
+        ui.progressText.textContent = `${percentage}% - GitHub Pages is building your site...`
+      } else if (percentage < 75) {
+        ui.progressText.textContent = `${percentage}% - Waiting for deployment to complete...`
       } else {
-        // Update progress text
-        if (displayPercentage < 25) {
-          progressText.textContent = `${displayPercentage}% - Preparing your changes...`
-        } else if (displayPercentage < 50) {
-          progressText.textContent = `${displayPercentage}% - Building your website...`
-        } else if (displayPercentage < 75) {
-          progressText.textContent = `${displayPercentage}% - Almost there...`
-        } else {
-          progressText.textContent = `${displayPercentage}% - Finalizing deployment...`
-        }
+        ui.progressText.textContent = `${percentage}% - Almost there...`
       }
 
-      // Update the progress bar - always move forward regardless of deployment status
-      progressBar.style.width = `${displayPercentage}%`
+      // Check for deployment errors
+      if (window.deploymentStatus.failed) {
+        ui.progressText.textContent = `${percentage}% - Error detected, but still waiting for GitHub Pages...`
+        ui.progressText.style.color = "#ff9800" // Warning color
+      }
 
-      // When we reach the end of the 60 seconds
-      if (currentStep >= TOTAL_STEPS) {
-        clearInterval(progressInterval)
-        completeProgressBar()
+      // When we reach the end (60 seconds exactly)
+      if (currentStep >= STEPS) {
+        clearInterval(timer)
+        completeDeployment(ui)
       }
     }, UPDATE_INTERVAL)
 
-    // Function to complete the progress bar
-    function completeProgressBar() {
-      // Set to 100%
-      progressBar.style.width = "100%"
+    // Set up the close button
+    ui.closeBtn.addEventListener("click", () => {
+      ui.container.remove()
+    })
 
-      if (window.deploymentFailed) {
-        progressText.textContent = "100% - Deployment completed with errors. Your changes may not be fully applied."
-        progressText.style.color = "red"
-      } else {
-        progressText.textContent = "100% - Deployment complete!"
-      }
-
-      // Show completion message
-      setTimeout(() => {
-        progressContainer.innerHTML = `
-          <h3 style="margin-top: 0; color: #333; font-family: var(--font-heading);">Deployment Complete!</h3>
-          <p style="color: #666; margin-bottom: 15px;">Your changes are now live.</p>
-          <div style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;">
-            <button id="view-site-btn" style="padding: 8px 15px; background-color: var(--hot-pink); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">View Your Site</button>
-            <button id="download-html-btn" style="padding: 8px 15px; background-color: var(--hot-pink); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">Download HTML</button>
-            <button id="close-progress-btn" style="padding: 8px 15px; background-color: #f0f0f0; color: #333; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">Close</button>
-          </div>
-        `
-
-        // Add event listeners to buttons
-        document.getElementById("view-site-btn").addEventListener("click", () => {
-          const timestamp = new Date().getTime()
-          window.open(`https://${config.owner}.github.io/${config.repo}/?t=${timestamp}`, "_blank")
-        })
-
-        document.getElementById("download-html-btn").addEventListener("click", downloadUpdatedHTML)
-
-        document.getElementById("close-progress-btn").addEventListener("click", () => {
-          progressContainer.remove()
-        })
-      }, 1000) // Wait 1 second after reaching 100% before showing completion
-    }
-
-    // Check if changes are deployed - just for status tracking, doesn't affect progress bar timing
-    const checkDeploymentInterval = setInterval(() => {
-      if (window.deploymentSuccessful || window.deploymentFailed || currentStep >= TOTAL_STEPS) {
-        clearInterval(checkDeploymentInterval)
-      } else {
-        checkIfChangesDeployed()
-          .then((deployed) => {
-            if (deployed) {
-              window.deploymentSuccessful = true
-              // Note: We don't accelerate the progress bar anymore
-            }
-          })
-          .catch((error) => {
-            console.error("Error checking deployment:", error)
-          })
-      }
-    }, 3000) // Check every 3 seconds
+    // Set up the view site button
+    ui.viewSiteBtn.addEventListener("click", () => {
+      const timestamp = new Date().getTime()
+      window.open(`https://${config.owner}.github.io/${config.repo}/?t=${timestamp}`, "_blank")
+    })
   }
 
-  // Replace the deployChanges function to work with the new progress bar
+  // Function to complete the deployment progress
+  function completeDeployment(ui) {
+    // Set to 100%
+    ui.progressBar.style.width = "100%"
+
+    // Update text based on deployment status
+    if (window.deploymentStatus.failed) {
+      ui.progressText.textContent = "100% - Deployment completed with errors. Your changes may not be fully applied."
+      ui.progressText.style.color = "#f44336" // Error color
+    } else {
+      ui.progressText.textContent = "100% - Deployment complete!"
+      ui.progressText.style.color = "#4caf50" // Success color
+    }
+
+    // Show action buttons
+    ui.actions.style.display = "block"
+  }
+
+  // Deploy changes to GitHub
   function deployChanges() {
     if (!hasSavedChanges) {
       showNotification("No saved changes to deploy", "info")
@@ -1466,8 +1376,16 @@ document.addEventListener("DOMContentLoaded", () => {
       return
     }
 
-    // Start the deployment progress tracking first
-    startDeploymentProgress()
+    // Reset deployment status
+    window.deploymentStatus = {
+      inProgress: true,
+      successful: false,
+      failed: false,
+      errorMessage: null,
+    }
+
+    // Start the deployment progress UI
+    runDeploymentProgress()
 
     // First, get the current file to get its SHA
     fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`, {
@@ -1478,14 +1396,11 @@ document.addEventListener("DOMContentLoaded", () => {
     })
       .then((response) => {
         if (!response.ok) {
-          console.error("Failed to fetch file info:", response.status, response.statusText)
           throw new Error(`Failed to fetch file info: ${response.status} ${response.statusText}`)
         }
         return response.json()
       })
       .then((data) => {
-        console.log("Got file SHA:", data.sha)
-
         // Prepare the content for GitHub
         let encodedContent
         try {
@@ -1493,11 +1408,8 @@ document.addEventListener("DOMContentLoaded", () => {
           const contentBytes = new TextEncoder().encode(websiteContent)
           encodedContent = btoa(String.fromCharCode(...new Uint8Array(contentBytes)))
         } catch (error) {
-          console.error("Error encoding content:", error)
           throw new Error(`Error encoding content: ${error.message}`)
         }
-
-        console.log("Content encoded successfully. Length:", encodedContent.length)
 
         // Now update the file with the new content
         return fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.contentFile}`, {
@@ -1518,14 +1430,13 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((response) => {
         if (!response.ok) {
           return response.text().then((text) => {
-            console.error("Failed to save changes:", response.status, response.statusText, text)
             throw new Error(`Failed to save changes: ${response.status} ${response.statusText}`)
           })
         }
         return response.json()
       })
       .then((data) => {
-        console.log("GitHub update successful:", data)
+        // Update the original content
         originalContent = websiteContent
 
         // Reset saved changes flag
@@ -1537,31 +1448,22 @@ document.addEventListener("DOMContentLoaded", () => {
           statusIndicator.remove()
         }
 
-        // Mark the deployment as successful
-        window.deploymentSuccessful = true
+        // Mark deployment as successful
+        window.deploymentStatus.successful = true
+        window.deploymentStatus.inProgress = false
       })
       .catch((error) => {
         console.error("Error deploying changes:", error)
-        window.deploymentFailed = true
 
-        // Update the fixed progress text if it exists
-        const progressText = document.getElementById("fixed-progress-text")
-        if (progressText) {
-          progressText.textContent = `Error: ${error.message}. Deployment failed.`
-          progressText.style.color = "red"
-        }
+        // Mark deployment as failed
+        window.deploymentStatus.failed = true
+        window.deploymentStatus.errorMessage = error.message
+        window.deploymentStatus.inProgress = false
       })
   }
 
   // Show notification
-  // Replace the showNotification function to prevent it from clearing the progress bar
   function showNotification(message, type = "success") {
-    // Don't clear the notification if it contains a deployment progress bar
-    if (notification.querySelector(".deployment-progress")) {
-      console.log("Progress bar active, not clearing notification")
-      return
-    }
-
     // Clear any existing content
     notificationMessage.textContent = message
     notification.className = "notification"
@@ -1583,7 +1485,7 @@ document.addEventListener("DOMContentLoaded", () => {
     notification.classList.add("show")
 
     // For success messages, auto-hide after 5 seconds
-    if (type === "success" && !message.includes("deployed successfully")) {
+    if (type === "success") {
       setTimeout(() => {
         notification.classList.remove("show")
       }, 5000)
