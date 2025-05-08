@@ -436,7 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
         id: `link-${index}`,
         href: el.getAttribute("href"),
         text: el.textContent.trim(),
-        path: getElementPath(el),
+        path: this.getElementPath(el),
       })
     })
 
