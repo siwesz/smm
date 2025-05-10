@@ -545,30 +545,7 @@ document.addEventListener("DOMContentLoaded", () => {
       textFieldsContainer.innerHTML += "<p>No text content found in this section.</p>"
     }
 
-    // Add "Add New Text" button
-    const addTextBtn = document.createElement("button")
-    addTextBtn.className = "btn-secondary"
-    addTextBtn.textContent = "Add New Text"
-    addTextBtn.addEventListener("click", () => {
-      // Load the admin-add-content.js script if not already loaded
-      if (typeof addNewTextElement !== "function") {
-        const script = document.createElement("script")
-        script.src = "admin-add-content.js"
-        document.head.appendChild(script)
-        script.onload = () => {
-          if (typeof addNewTextElement === "function") {
-            addNewTextElement(section.id)
-            markUnsavedChanges()
-          } else {
-            console.error("addNewTextElement is not a function after script load")
-          }
-        }
-      } else {
-        addNewTextElement(section.id)
-        markUnsavedChanges()
-      }
-    })
-    textFieldsContainer.appendChild(addTextBtn)
+    // Add the text fields container to the editor
     editorFields.appendChild(textFieldsContainer)
 
     // Add image fields
@@ -585,30 +562,7 @@ document.addEventListener("DOMContentLoaded", () => {
       imageFieldsContainer.innerHTML += "<p>No images found in this section.</p>"
     }
 
-    // Add "Add New Image" button
-    const addImageBtn = document.createElement("button")
-    addImageBtn.className = "btn-secondary"
-    addImageBtn.textContent = "Add New Image"
-    addImageBtn.addEventListener("click", () => {
-      // Load the admin-add-content.js script if not already loaded
-      if (typeof addNewImage !== "function") {
-        const script = document.createElement("script")
-        script.src = "admin-add-content.js"
-        document.head.appendChild(script)
-        script.onload = () => {
-          if (typeof addNewImage === "function") {
-            addNewImage(section.id)
-            markUnsavedChanges()
-          } else {
-            console.error("addNewImage is not a function after script load")
-          }
-        }
-      } else {
-        addNewImage(section.id)
-        markUnsavedChanges()
-      }
-    })
-    imageFieldsContainer.appendChild(addImageBtn)
+    // Add the image fields container to the editor
     editorFields.appendChild(imageFieldsContainer)
 
     // Add link fields
@@ -625,30 +579,7 @@ document.addEventListener("DOMContentLoaded", () => {
       linkFieldsContainer.innerHTML += "<p>No links found in this section.</p>"
     }
 
-    // Add "Add New Link" button
-    const addLinkBtn = document.createElement("button")
-    addLinkBtn.className = "btn-secondary"
-    addLinkBtn.textContent = "Add New Link"
-    addLinkBtn.addEventListener("click", () => {
-      // Load the admin-add-content.js script if not already loaded
-      if (typeof addNewLink !== "function") {
-        const script = document.createElement("script")
-        script.src = "admin-add-content.js"
-        document.head.appendChild(script)
-        script.onload = () => {
-          if (typeof addNewLink === "function") {
-            addNewLink(section.id)
-            markUnsavedChanges()
-          } else {
-            console.error("addNewLink is not a function after script load")
-          }
-        }
-      } else {
-        addNewLink(section.id)
-        markUnsavedChanges()
-      }
-    })
-    linkFieldsContainer.appendChild(addLinkBtn)
+    // Add the link fields container to the editor
     editorFields.appendChild(linkFieldsContainer)
   }
 
@@ -687,14 +618,38 @@ document.addEventListener("DOMContentLoaded", () => {
     const fieldGroup = document.createElement("div")
     fieldGroup.className = "field-group"
 
-    // Create a more descriptive label based on the element type and content
-    let labelText = `${text.element.toUpperCase()} Text`
+    // Create a more user-friendly label based on content context
+    let labelText = "Text Content"
 
-    // For logo parts, make the label more descriptive
+    // Special cases for different elements
     if (text.part === "main") {
       labelText = "Logo Main Text"
     } else if (text.part === "span") {
       labelText = "Logo Accent Text"
+    } else if (text.element === "h1") {
+      labelText = "Main Heading"
+    } else if (text.element === "h2") {
+      labelText = "Section Heading"
+    } else if (text.element === "h3") {
+      labelText = "Sub Heading"
+    } else if (text.element === "p") {
+      labelText = "Paragraph"
+    } else if (text.element === "span") {
+      labelText = "Highlighted Text"
+    } else if (text.element === "li") {
+      labelText = "List Item"
+    } else if (text.element === "a") {
+      labelText = "Link Text"
+    } else if (text.path.includes("testimonial-text")) {
+      labelText = "Testimonial Quote"
+    } else if (text.path.includes("testimonial-author")) {
+      labelText = "Testimonial Author"
+    } else if (text.path.includes("stat-card")) {
+      if (text.element === "h3") {
+        labelText = "Statistic Number"
+      } else {
+        labelText = "Statistic Label"
+      }
     }
 
     const label = document.createElement("label")
@@ -1261,7 +1216,7 @@ document.addEventListener("DOMContentLoaded", () => {
     container.innerHTML = `
       <div style="margin-bottom: 15px;">
         <h3 style="margin: 0 0 10px 0; color: #333; font-weight: 600; font-size: 18px;">Deployment in Progress</h3>
-        <p style="margin: 0; color: #666; font-size: 14px;">Your changes are being published to GitHub Pages. This will take exactly 60 seconds.</p>
+        <p style="margin: 0; color: #666; font-size: 14px;">Your changes are being published to your website. This will take exactly 60 seconds.</p>
       </div>
       <div style="height: 12px; background-color: #f0f0f0; border-radius: 6px; overflow: hidden; margin: 15px 0;">
         <div id="deployment-progress-bar" style="height: 100%; width: 0%; background-color: #FF3399; transition: width 0.5s ease;"></div>
@@ -1311,18 +1266,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Update the text based on progress
       if (percentage < 25) {
-        ui.progressText.textContent = `${percentage}% - Uploading changes to GitHub...`
+        ui.progressText.textContent = `${percentage}% - Uploading your changes...`
       } else if (percentage < 50) {
-        ui.progressText.textContent = `${percentage}% - GitHub Pages is building your site...`
+        ui.progressText.textContent = `${percentage}% - Building your website...`
       } else if (percentage < 75) {
-        ui.progressText.textContent = `${percentage}% - Waiting for deployment to complete...`
+        ui.progressText.textContent = `${percentage}% - Preparing your content...`
       } else {
         ui.progressText.textContent = `${percentage}% - Almost there...`
       }
 
       // Check for deployment errors
       if (window.deploymentStatus.failed) {
-        ui.progressText.textContent = `${percentage}% - Error detected, but still waiting for GitHub Pages...`
+        ui.progressText.textContent = `${percentage}% - Error detected, but still trying to complete deployment...`
         ui.progressText.style.color = "#ff9800" // Warning color
       }
 
@@ -1352,10 +1307,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Update text based on deployment status
     if (window.deploymentStatus.failed) {
-      ui.progressText.textContent = "100% - Deployment completed with errors. Your changes may not be fully applied."
+      ui.progressText.textContent = "100% - Publishing completed with errors. Your changes may not be fully applied."
       ui.progressText.style.color = "#f44336" // Error color
     } else {
-      ui.progressText.textContent = "100% - Deployment complete!"
+      ui.progressText.textContent = "100% - Website successfully updated!"
       ui.progressText.style.color = "#4caf50" // Success color
     }
 
