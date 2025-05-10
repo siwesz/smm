@@ -304,10 +304,13 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
-  // Extract text content from a section
+  // Modify the extractTextContent function to prevent duplicate "Let's Connect!" entries
+  // Find the extractTextContent function and replace it with this improved version
+
   function extractTextContent(element) {
     const texts = []
     const processedElements = new Set() // Keep track of elements we've already processed
+    const processedTexts = new Set() // Keep track of text content we've already processed
 
     // First, handle special elements like logo-text that have mixed content
     const logoElements = element.querySelectorAll(".logo-text, .footer-logo h2")
@@ -399,14 +402,27 @@ document.addEventListener("DOMContentLoaded", () => {
         return
       }
 
+      // Skip hero sticker if it's "Let's Connect!" to avoid duplication
+      if (el.closest(".hero-sticker") && el.textContent.trim() === "Let's Connect!") {
+        return
+      }
+
+      // Skip if we've already processed this exact text content (to avoid duplicates like "Let's Connect!")
+      const trimmedContent = el.textContent.trim()
+      if (processedTexts.has(trimmedContent)) {
+        return
+      }
+
       // Add the text element to our collection
       texts.push({
         id: `text-${index}`,
         element: el.tagName.toLowerCase(),
-        content: el.textContent.trim(),
+        content: trimmedContent,
         path: getElementPath(el),
       })
 
+      // Mark this text content as processed
+      processedTexts.add(trimmedContent)
       processedElements.add(el)
     })
 
